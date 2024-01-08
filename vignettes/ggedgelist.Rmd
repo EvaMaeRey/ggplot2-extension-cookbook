@@ -1,0 +1,20 @@
+---
+title: "ggedgelist"
+output: 
+  rmarkdown::html_vignette:
+    toc: TRUE
+vignette: >
+  %\VignetteIndexEntry{ggedgelist}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/")
+```
+
+```{r, child = "../../ggedgelist/README.Rmd", eval = F}
+```
