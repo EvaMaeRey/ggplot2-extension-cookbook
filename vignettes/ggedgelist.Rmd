@@ -16,5 +16,5 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/")
 ```
 
-```{r, child = "../../ggedgelist/README.Rmd", eval = F}
+```{r, child = "../../ggedgelist/README.Rmd", eval = T}
 ```
