@@ -37,7 +37,7 @@ The goal of ggplot2-extension-cookbook is to collect some strategies for
 ggplot2 extension.
 
 Since I’ve attended the talk ‘Extending your ability to extend ggplot2’
-in Jan 2020, I’ve been interested in extension.
+in Jan 2020, I’ve been interested in extension..
 
 For me, it took a while to get up and running with the existing
 materials.
