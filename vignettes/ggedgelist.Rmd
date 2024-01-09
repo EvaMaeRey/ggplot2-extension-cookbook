@@ -13,7 +13,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.path = "man/figures/")
+  fig.path = "../../man/figures/")
 ```
 
 ```{r, child = "../../ggedgelist/README.Rmd", eval = T}
