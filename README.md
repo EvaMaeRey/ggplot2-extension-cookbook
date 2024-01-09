@@ -17,9 +17,10 @@
         (waterfall)](#one-geom-per-row-but-interdependence-waterfall)
   - [summarize first, then interdependence
     …](#summarize-first-then-interdependence-)
-  - [Piggybacking on existing stats](#piggybacking-on-existing-stats)
-  - [Adding defaults to existing stats via ggproto
-    editing](#adding-defaults-to-existing-stats-via-ggproto-editing)
+  - [repurposing an existing stats](#repurposing-an-existing-stats)
+      - [piggybacking](#piggybacking)
+      - [Adding defaults to existing stats via ggproto
+        editing](#adding-defaults-to-existing-stats-via-ggproto-editing)
   - [modifying ggplot() function (data
     transformation)](#modifying-ggplot-function-data-transformation)
   - [modifying ggraph() function](#modifying-ggraph-function)
@@ -53,10 +54,11 @@ extension:
 
 # Preface and acknowledgements
 
-Thomas Lin Pederson’s talk ‘Extending your ability to extend ggplot2’,
-which I attended in Jan 2020, had the important central message - “you
-can be a ggplot2 extender”. And since then, I aimed to be an extender,
-and now I in turn want to extend that message to you\!
+Thomas Lin Pederson’s January 2020 talk ‘Extending your ability to
+extend ggplot2’, which I attended in seated on the floor of a packed out
+ballroom, had the important central message - “you can be a ggplot2
+extender”. And since then, I aimed to be an extender, and now I in turn
+want to extend that message to you\!
 
 I’d been using ggplot2 since about 2017, and in general, really enjoyed
 the user interface. In general, the syntax does a fantastic job at
@@ -64,8 +66,10 @@ letting users compose their plots bit-by-bit, closely resembling to how
 you might sketch out a plot on a notepad or blackboard, and describing
 your decisions as you go to yourself or a colleague. Or as Thomas Lin
 Pederson has also said, ‘ggplot2 lets you *speak your plot into
-existence*’. And perhaps a little less eloquently by Hadley Wickham
-“This is what I’m thinking; your the computer, now go and do it\!”
+existence*’. And perhaps a little less eloquently by Hadley Wickham’s,
+the ggplot2 author, “This is what I’m thinking; your the computer, now
+go and do it\!” (paraphrase of the author paraphrasing how he was
+thinking about how data viz should feel — even before ggplot2 existed)
 
 But there were pain points when using ‘base’ ggplot2; for me this was
 mostly when a geom didn’t exist for doing some compute in the
@@ -75,15 +79,16 @@ environment. This pre-computation problem felt manageable in classroom
 setting which I was in through early 2020 but when I moved to a
 primarily analytic role at West Point — where the volume of analysis was
 simply higher and turn around times needed to be faster — I felt the
-problem much more acutely.
+problem much more acutely. (Overnight, I went from weak preference for
+geom\_col - to strong preference for geom\_bar\!)
 
 Extension seemed to offer the solution to the problem and it’s
-application seemed more pressing.
+application seemed more pressing in an analyst role.
 
 However, to get the desired magical ggplot2 behavior that I was seeking,
-just for one geom took many months (about a year) facing failure and
+just for one geom took many months (most of 2020) facing failure and
 frustration along the way. If I weren’t so convinced of the efficiency
-gains that it would eventually yeild, I’d likely have given up.
+gains that it would eventually yield, I’d likely have given up.
 
 Now, recognizing this, I think there is space for more ggplot2 extension
 reference materials targeted at seasoned ggplot2 and R users. *ggplot2
@@ -219,13 +224,15 @@ library(ggwaterfall)
 library(ggcandlestick)
 ```
 
-# Piggybacking on existing stats
+# repurposing an existing stats
+
+## piggybacking
 
 ``` r
 library(ggsmoothfit)
 ```
 
-# Adding defaults to existing stats via ggproto editing
+## Adding defaults to existing stats via ggproto editing
 
 # modifying ggplot() function (data transformation)
 
