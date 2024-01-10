@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-*The ggplot2 Extension Cookbook* aims to provide ggplot2 extension strategies in a consistent and accessible way.
+*The ggplot2 Extension Cookbook* aims to provide ggplot2 extension strategies in a consistent and accessible way.  
 
 We group the content by extension type, provide demonstrations of their use, and then link (for now) to the code that defines them.  In that material, I'll try to stick to a formula to orient you to the ggplot2 extension:
 
@@ -29,19 +29,19 @@ We group the content by extension type, provide demonstrations of their use, and
 - Step 3: Pass ggproto to a user-facing function for use in a ggplot() pipeline
 - Step 4: Try out/test/enjoy!
 
+Furthermore, we'll try to orient with a ratio typology that you'll see in the section titles.  
+
+Finally, most of the code is at the 'R for data science level, and not 'Advanced R' level, which hopefully will afford greater reach. 
+
 # Preface and acknowledgements
 
-Thomas Lin Pederson's January 2020 talk 'Extending your ability to extend ggplot2', which I attended in seated on the floor of a packed out ballroom, had the important central message - "you can be a ggplot2 extender".  And since then, I aimed to be an extender, and now I in turn want to extend that message to you!
+I attended Thomas Lin Pederson's January 2020 talk 'Extending your ability to extend ggplot2' seated on the floor of a packed out ballroom.  The talk had the important central message - "you can be a ggplot2 extender".  And since then, I aimed to be an extender. I hope *ggplot2 Extension Cookbook* will help you in your extender journey and, if you are fluent in R and ggplot2, also says to you "you can be a ggplot2 extender".
 
-I'd been using ggplot2 since about 2017, and in general, really enjoyed the user interface.  In general, the syntax does a fantastic job at letting users compose their plots bit-by-bit, closely resembling to how you might sketch out a plot on a notepad or blackboard, and describing your decisions as you go to yourself or a colleague.  Or as Thomas Lin Pederson has also said, 'ggplot2 lets you *speak your plot into existence*'.  And perhaps a little less eloquently by Hadley Wickham's, the ggplot2 author,  "This is what I'm thinking; your the computer, now go and do it!" (paraphrase of the author paraphrasing how he was thinking about how data viz should feel --- even before ggplot2 existed)
+I've been using ggplot2 since about 2017, and really enjoyed the user interface.  In general, the syntax does a fantastic job at letting users compose their plots bit-by-bit, closely resembling to how you might sketch out a plot on a notepad or blackboard, and describing your decisions as you go to yourself or a colleague.  Or as Thomas Lin Pederson has also said, 'ggplot2 lets you *speak your plot into existence*'.  And perhaps a little less eloquently by Hadley Wickham's, the ggplot2 author,  "This is what I'm thinking; your the computer, now go and do it!" (my paraphrase of the author talking about how he thought data viz should feel as a statistical consultant -- well before ggplot2 existed).
 
-But there were pain points when using 'base' ggplot2; for me this was mostly when a geom didn't exist for doing some compute in the background, but maybe wanted that compute done over and over, and it would be a slough to do it over and over upstream to the plotting environment. This pre-computation problem felt manageable in classroom setting which I was in through early 2020 but when I moved to a primarily analytic role at West Point --- where the volume of analysis was simply higher and turn around times needed to be faster --- I felt the problem much more acutely.  (Overnight, I went from weak preference for geom_col - to strong preference for geom_bar!)
+But there were pain points when using 'base' ggplot2; for me, this was mostly when a geom didn't exist for doing some compute in the background, but maybe wanted that compute done over and over, and it would be a slough to do it over and over upstream to the plotting environment. This pre-computation problem felt manageable in classroom setting which I was in through early 2020 but when I moved to a primarily analytic role at West Point --- where the volume of analysis was simply higher and turn around times faster --- I felt the problem much more acutely.  (Overnight, I went from weak preference for geom_col - to strong preference for geom_bar!)   Extension seemed to offer the solution to the problem and I was more motivated in my analyst role.
 
-Extension seemed to offer the solution to the problem and it's application seemed more pressing in an analyst role.
-
-However, to get the desired magical ggplot2 behavior that I was seeking, just for one geom took many months (most of 2020) facing failure and frustration along the way.  If I weren't so convinced of the efficiency gains that it would eventually yield, I'd likely have given up.    
-
-Now, recognizing this, I think there is space for more ggplot2 extension reference materials targeted at seasoned ggplot2 and R users.  *ggplot2 Extension Cookbook* might serve this group. 
+However, I experienced about a year of failure and frustration when first entering the extension space.  If I weren't so convinced of the efficiency gains that it would eventually yield, I'd likely have given up.  Recognizing the substancial hurdles for even long time R and ggplot2 users, I think there is space for more ggplot2 extension reference materials, such as the recipes in the *ggplot2 Extension Cookbook*.
 
 I'm grateful for several expediences and the efforts of others that have refined these new materials.  First, just after getting my own feet wet in extension, I had the chance to work on extension with students in the context of independent studies.  Our focus was the same type of extension that Pederson demonstrated -- a geom that used a Stat to do some computational work, and then inherited the rest of its behavior from a more primitive geom.  Working with first and second year undergrad students meant that I had to think about and formulate workflow - where reference material would even be accessibility to very new R users. As veterans of just one or two stats classes that used R and ggplot2, what would they find familiar and accessible?  What might we be able to de-emphasize and still succeed?  I'm grateful to these  This worked with students and I had a chance to refine it further. 
 
@@ -53,9 +53,10 @@ The following steps emerged and persisted into our tutorial formula:
 - Step 3: Pass ggproto to stat/geom/facet function
 - Step 4: Try out/test/enjoy!
 
+
 Impressed that ... Novice -> extender, in 4 months.  
 
-I wondered how the strategy would perform with experienced R and ggplot2 users.  Being an academic, I went down the formal route of devising a tutorial and formally getting feedback on it via focus groups and a survey, after refining the tutorial.  
+I wondered how the strategy would perform with experienced R and ggplot2 users.  Being an academic, further assessment sounded attractive and I went down the route of devising a tutorial [with assistance from independent study student Morgan Brown] and formally getting feedback on it via focus groups and a survey, after refining the tutorial.  
 
 I did some research on ggplot2 extension among ggplot2 and R 'super users' and have found that the perhaps this community is under-served, but with the right materials, more folks could get into ggplot2 extension.
 
@@ -71,7 +72,7 @@ The feedback on the easy-geom-recipes was collected in March 2023.
 
 So, I'm interested in simply developing new, useful extensions. 
 
-To try to make those experiences valuable to others, I follow the 'recipe' formula as much as possible so that as strategies morph, one still knows where one is in the process.
+To try to make those experiences valuable to others, I follow the 'recipe' formula as much as possible so that as strategies morph, one still recognizes where we are at a high-level in the process.
 
 Now to serve the community and for use in this *ggplot2 Extension Cookbook*, I'm using an in-README documentation strategy for my ggplot2 extension packages so that the development stories are in one place instead of scattered between package files. 
 
@@ -83,12 +84,20 @@ I'm personally grateful to other ggplot2 extenders and R enthusiasts that have s
 
 I'm also grateful to the ggplot2 development team .
 
-Winston Chang, who gets top billing in the ggplot2 extension vignette, 
+I'm also indebted to my Department of Mathematics and Dean Data Cell colleagues at West Point, for sitting through some talks (some extemporaneous and muddled) where I tried to articulate my ggplot2 extension dreams.
+
+Finally, to Winston Chang, who gets top billing in the ggplot2 extension vignette along with your ggproto, I hope you won't mind the general approach here which experiments with making ggproto as ignorable as possible for OOP noobs.  I also hope to meet you someday and hear more about the early days of ggproto, maybe at ggplot2 extenders meetup as a special guest, perhaps January 2025.
+
+And finally, finally to Hadley Wickham and Leland Wilkinson having incredible insights and acting on them.  
 
 
 # geom and stat layers
 
-## one geom per row in a input data frame
+data:n definding geom:geom
+
+## geom_coordinates: **1:1:1** 
+
+*a row in the input dataframe will display a single geometry, which will be defined by as single row in the internal data*
 
 ```{r}
 ggxmean::geom_text_coordinate()
@@ -97,42 +106,114 @@ ggxmean::geom_text_coordinate()
 Note: in this situation, you can also get away with delayed aesthetic evaluation.  See also redefaulting.
 
 
+## geom_xy_means: **n:1:1** 
 
-
-## one geom summarizing many rows in an input data frame, group-wise computation
+*many rows from a dataset: will be summarized and visualized by as single mark: the mark will be defined by one row of data*
 
 ```{r}
 ggxmean::geom_xy_means()
 ```
 
-## a geom defined by many rows, generated by a single row of the input data frame
+## geom_circle: **1:1:n** 
+
+*a single row in a dataframe: will be visualized by a single mark: the mark will be defined by many-row in an internal dataframe*
+
+for each row in the dataframe, a single geometry is visualized, but each geom is defined by many rows...
+
+## geom_us_state: **1:1:n**
 
 
 ```{r}
 library(ggcircle)
+```
+
+
+## geom_ggcirclepack: **1:1:n, interdependance**
+
+*a many-row geom for each row of the input data frame, with interdependence between input observations.*
+
+```{r}
 library(ggcirclepack)
 ```
 
 
-## between-group computation
+## geom_ols: **n:k:w; interdependence**
+
+*between-group computation*
 
 ```{r}
 library(ggols)
 ```
 
 
-## a geom defined by an sf geometry column
+
+
+## geom_county: **1:1:1 via geometry sf**
+
+*a geom defined by an sf geometry column*
 
 ```{r}
 library(ggnorthcarolina)
 ```
 
+## geom_waterfall: **1:1:1; interdependence**
 
-## One geom per row, but interdependence (waterfall)
+*One-row geom for each row in input dataset; geom interdependence*
 
-```{r}
+A waterfall plot displays inflows and outflows that occur as a result of events as well as the balance across multiple events. It is typically displayed as a series of rectangles.  Because the net change is displayed (cumulative change), there is interdependence between the geometries on our plot -- where one rectangle ends, the next in the series begins. 
+
+```{r, eval = T}
 library(ggwaterfall)
+library(tidyverse)
+flow_df <- data.frame(event = c(
+                     "Sales", 
+                     "Refunds",
+                     "Payouts", 
+                     "Court Losses", 
+                     "Court Wins", 
+                     "Contracts", 
+                     "Fees"),
+           change = c(6400, -1100, 
+                      -100, -4200, 3800, 
+                      1400, -2800)) |> 
+  mutate(event = factor(event))
+
+flow_df
+
+flow_df |> 
+  ggplot() +
+  geom_hline(yintercept = 0) +
+  aes(change = change, 
+      x = event) + # event in order
+  geom_waterfall() + 
+  geom_waterfall_label() + 
+  scale_y_continuous(expand = expansion(.1)) + 
+  scale_fill_manual(values = c("springgreen4", "darkred"))
 ```
+
+The strategy to create geom waterfall follows the standard four steps. 
+
+### Step 0
+
+For 'step 0', we base ggplot2 to accomplish this task, and actually pretty closely follow Hadley Wickham's short paper that tackles a waterfall plot with ggplot2. https://vita.had.co.nz/papers/ggplot2-wires.pdf
+
+### Steps 1 and 2
+
+
+Then, we bundle up this computation into a function (step 1), called compute_panel_waterfall.  This function then define the compute_panel element in the ggproto object (step 2).  We want the computation done *panel-wise* because of the interdependence between the events, which run along the x axis.  Group-wise computation (the defining compute_group element), would fail us, as the cross-event interdependence would not be preserved. 
+
+```{r, code = readLines("../ggwaterfall/R/StatWaterfall.R")}
+```
+
+### Step 3
+
+In step 3, we define stat_waterfall, passing along StatWaterfall to create a ggplot2 layer function. We include a standard set of arguments, and we set the geom to ggplot2::GeomRect.  
+
+
+### Step 4
+
+In Step 4, we get to try out the functionality.  
+
 
 # summarize first, then interdependence ...
 
@@ -140,15 +221,22 @@ library(ggwaterfall)
 library(ggcandlestick)
 ```
 
+## geom_pie: **n->1:1:1**
+
+
+## geom_wedge: **n->1:1:n**
+
+
+
 # repurposing an existing stats
 
-## piggybacking
+## geom_smoothfit:  ggproto piggybacking
 
 ```{r}
 library(ggsmoothfit)
 ```
 
-## Adding defaults to existing stats via ggproto editing
+## geom_barlab:  Adding defaults to existing stats via ggproto editing
 
 ```{r}
 
@@ -169,6 +257,23 @@ library(ggedgelist)
 ```
 
 
+
+
+# defining theme...
+
+```{r}
+library(ggchalkboard)
+```
+
+# pseudo extension?
+
+## geom-led funtions.
+
+
+```{r}
+
+```
+
 # wrapping fiddly functions (annotate and theme)
 
 ```{r}
@@ -179,13 +284,8 @@ library(ggstamp)
 library(ggcons) # 
 ```
 
-# defining theme...
 
-```{r}
-library(ggchalkboard)
-```
-
-# What about formal testing?
+# ggtedious *formal testing*
 
 ```{r}
 library(ggtedius)
