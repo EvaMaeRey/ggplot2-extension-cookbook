@@ -2,8 +2,10 @@
   - [ggplot2-extension-cookbook](#ggplot2-extension-cookbook)
   - [Preface and acknowledgements](#preface-and-acknowledgements)
   - [geom and stat layers](#geom-and-stat-layers)
-      - [geom\_coordinates: **1:1:1**](#geom_coordinates-111)
+      - [geom\_text\_coordinate: **1:1:1**](#geom_text_coordinate-111)
       - [geom\_xy\_means: **n:1:1**](#geom_xy_means-n11)
+          - [build](#build)
+      - [geom\_hull: **n:1:k**](#geom_hull-n1k)
       - [geom\_circle: **1:1:n**](#geom_circle-11n)
       - [geom\_us\_state: **1:1:n**](#geom_us_state-11n)
       - [geom\_ggcirclepack: **1:1:n,
@@ -18,13 +20,13 @@
           - [Steps 1 and 2](#steps-1-and-2)
           - [Step 3](#step-3)
           - [Step 4](#step-4)
-  - [summarize first, then interdependence
-    …](#summarize-first-then-interdependence-)
+  - [geom\_candlestick summarize first, then interdependence
+    …](#geom_candlestick-summarize-first-then-interdependence-)
       - [geom\_pie: **n-\>1:1:1**](#geom_pie-n-111)
       - [geom\_wedge: **n-\>1:1:n**](#geom_wedge-n-11n)
   - [repurposing an existing stats](#repurposing-an-existing-stats)
-      - [geom\_smoothfit: ggproto
-        piggybacking](#geom_smoothfit-ggproto-piggybacking)
+      - [geom\_smoothfit: n:1:n ggproto piggybacking on
+        compute…](#geom_smoothfit-n1n-ggproto-piggybacking-on-compute)
       - [geom\_barlab: Adding defaults to existing stats via ggproto
         editing](#geom_barlab-adding-defaults-to-existing-stats-via-ggproto-editing)
   - [modifying ggplot() function (data
@@ -207,17 +209,96 @@ incredible insights and acting on them.
 
 <data:n> definding geom:geom
 
-## geom\_coordinates: **1:1:1**
+## geom\_text\_coordinate: **1:1:1**
 
-*a row in the input dataframe will display a single geometry, which will
-be defined by as single row in the internal data*
+  - for each row in the input dataframe …
+  - we’ll perceive a single mark
+  - which will be defined by as single row in the internal dataframe
+
+<!-- end list -->
 
 ``` r
-ggxmean::geom_text_coordinate()
+library(ggplot2)
+library(ggxmean)
+
+ggplot(cars) + 
+  aes(x = speed, y = dist) + 
+  geom_point() + 
+  geom_text_coordinate(check_overlap = T,
+                       hjust = 0,
+                       vjust = 0)
+```
+
+![](man/figures/unnamed-chunk-2-1.png)<!-- -->
+
+``` r
+## Madison put this together
+
+#' A Function to Label Points
+#'
+#' @param data this is the data set where the points are found
+#' @param scales
+#'
+#' @return this function returns the coordinates of the point as: (x,y)
+#' @export
+#'
+#' @examples
+#' library(dplyr)
+#' library(magrittr)
+#' cars %>%
+#'   mutate(x = speed, y = dist) %>%
+#'   select(x,y) %>%
+#'   compute_group_coordinates()
+compute_group_coordinates <- function(data, scales) {
+
+  data.frame(x = data$x,
+             y = data$y,
+             label = paste0("(", data$x, ",", data$y, ")")
+
+  )
+}
+
+StatCoordinate <- ggplot2::ggproto(`_class` = "StatCoordinate",
+                 `_inherit` = ggplot2::Stat,
+                 required_aes = c("x", "y"),
+                 compute_group = compute_group_coordinates)
+
+
+
+#' Returns a scatter plot with points that are labeled
+#'
+#' @inheritParams geom_text
+#'
+#' @return a scatter plot with points that are labeled
+#' @export
+#'
+#' @examples
+#' library(ggplot2)
+#' library(magrittr)
+#' cars %>%
+#' ggplot(aes(x = speed, y = dist)) +
+#' geom_point() +
+#' geom_text_coordinate(check_overlap = TRUE,
+#' nudge_x = .3)
+geom_text_coordinate <- function(mapping = NULL, data = NULL,
+                                 position = "identity", na.rm = FALSE,
+                                 show.legend = NA,
+                                 inherit.aes = TRUE, ...) {
+  ggplot2::layer(
+    stat = StatCoordinate,
+    geom = ggplot2::GeomText,
+    data = data,
+    mapping = mapping,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
 ```
 
 Note: in this situation, you can also get away with delayed aesthetic
-evaluation. See also redefaulting.
+evaluation. And, see also redefaulting.
 
 ## geom\_xy\_means: **n:1:1**
 
@@ -225,7 +306,76 @@ evaluation. See also redefaulting.
 single mark: the mark will be defined by one row of data*
 
 ``` r
-ggxmean::geom_xy_means()
+ggplot(mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() + 
+  geom_xy_means(size = 8)
+```
+
+![](man/figures/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
+
+last_plot() + 
+  aes(color = as.factor(am))
+```
+
+![](man/figures/unnamed-chunk-4-2.png)<!-- -->
+
+#### build
+
+``` r
+### xymean
+
+StatXymean <- ggplot2::ggproto("StatXymean",
+                               ggplot2::Stat,
+                               compute_group = function(data, scales) {
+
+                                 data.frame(y = mean(data$y),
+                                            x = mean(data$x))
+
+                               },
+
+                               required_aes = c("x", "y")
+)
+
+
+#' Place point at mean of x and mean of y
+#'
+#' @param mapping
+#' @param data
+#' @param position
+#' @param na.rm
+#' @param show.legend
+#' @param inherit.aes
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' library(ggplot2)
+#' ggplot(cars) + aes(x = speed, y = dist) +
+#' geom_point() + geom_xy_means(size = 5) + aes(color = speed > 15)
+geom_xy_means <- function(mapping = NULL, data = NULL,
+                        position = "identity", na.rm = FALSE, show.legend = NA,
+                        inherit.aes = TRUE, ...) {
+
+  ggplot2::layer(
+    stat = StatXymean, geom = ggplot2::GeomPoint, data = data, mapping = mapping,
+    position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+
+}
+```
+
+## geom\_hull: **n:1:k**
+
+from the ggplot2 vignette…
+
+``` 
+
 ```
 
 ## geom\_circle: **1:1:n**
@@ -238,36 +388,23 @@ geom is defined by many rows…
 
 ## geom\_us\_state: **1:1:n**
 
-``` r
-library(ggcircle)
-```
-
 ## geom\_ggcirclepack: **1:1:n, interdependance**
 
 *a many-row geom for each row of the input data frame, with
 interdependence between input observations.*
 
-``` r
-library(ggcirclepack)
-```
-
 ## geom\_ols: **n:k:w; interdependence**
 
 *between-group computation*
-
-``` r
-library(ggols)
-```
 
 ## geom\_county: **1:1:1 via geometry sf**
 
 *a geom defined by an sf geometry column*
 
-``` r
-library(ggnorthcarolina)
-```
-
 ## geom\_waterfall: **1:1:1; interdependence**
+
+The function geom\_waterfall() is exported from the ggwaterfall package,
+which is being developed at github.com/EvaMaeRey/ggwaterfall
 
 *One-row geom for each row in input dataset; geom interdependence*
 
@@ -281,11 +418,10 @@ our plot – where one rectangle ends, the next in the series begins.
 library(ggwaterfall)
 library(tidyverse)
 #> ── Attaching core tidyverse packages ─────────────────── tidyverse 2.0.0.9000 ──
-#> ✔ dplyr     1.1.0          ✔ readr     2.1.4     
-#> ✔ forcats   1.0.0          ✔ stringr   1.5.0     
-#> ✔ ggplot2   3.4.4.9000     ✔ tibble    3.2.1     
-#> ✔ lubridate 1.9.2          ✔ tidyr     1.3.0     
-#> ✔ purrr     1.0.1          
+#> ✔ dplyr     1.1.0     ✔ readr     2.1.4
+#> ✔ forcats   1.0.0     ✔ stringr   1.5.0
+#> ✔ lubridate 1.9.2     ✔ tibble    3.2.1
+#> ✔ purrr     1.0.1     ✔ tidyr     1.3.0
 #> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 #> ✖ dplyr::filter() masks stats::filter()
 #> ✖ dplyr::lag()    masks stats::lag()
@@ -324,7 +460,7 @@ flow_df |>
   scale_fill_manual(values = c("springgreen4", "darkred"))
 ```
 
-![](man/figures/unnamed-chunk-8-1.png)<!-- -->
+![](man/figures/unnamed-chunk-10-1.png)<!-- -->
 
 The strategy to create geom waterfall follows the standard four steps.
 
@@ -402,15 +538,103 @@ In step 3, we define stat\_waterfall, passing along StatWaterfall to
 create a ggplot2 layer function. We include a standard set of arguments,
 and we set the geom to ggplot2::GeomRect.
 
+``` r
+#' Title
+#'
+#' @param geom 
+#' @param mapping 
+#' @param data 
+#' @param position 
+#' @param na.rm 
+#' @param show.legend 
+#' @param inherit.aes 
+#' @param ... 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+stat_waterfall <- function(geom = ggplot2::GeomRect, 
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE, ...) {
+  ggplot2::layer(
+    stat = StatWaterfall,  # proto object from step 2
+    geom = geom,  # inherit other behavior
+    data = data,
+    mapping = mapping,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+
+#' Title
+#'
+#' @param geom 
+#' @param mapping 
+#' @param data 
+#' @param position 
+#' @param na.rm 
+#' @param show.legend 
+#' @param inherit.aes 
+#' @param ... 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+geom_waterfall <- stat_waterfall
+
+
+#' Title
+#'
+#' @param mapping 
+#' @param data 
+#' @param position 
+#' @param na.rm 
+#' @param show.legend 
+#' @param inherit.aes 
+#' @param ... 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+geom_waterfall_label <- function(..., lineheight = .8){
+  stat_waterfall(geom = "text", 
+                 lineheight = lineheight, ...)}
+```
+
 ### Step 4
 
 In Step 4, we get to try out the functionality.
 
-# summarize first, then interdependence …
-
 ``` r
-library(ggcandlestick)
+flow_df |> 
+  ggplot() +
+  geom_hline(yintercept = 0) +
+  aes(change = change, 
+      x = event) + # event in order
+  geom_waterfall() + 
+  geom_waterfall_label() + 
+  scale_y_continuous(expand = expansion(.1)) + 
+  scale_fill_manual(values = c("springgreen4", "darkred"))
+
+last_plot() + 
+  aes(x = fct_reorder(event, change))
+
+last_plot() + 
+  aes(x = fct_reorder(event, abs(change)))
 ```
+
+<img src="man/figures/unnamed-chunk-13-1.png" width="33%" /><img src="man/figures/unnamed-chunk-13-2.png" width="33%" /><img src="man/figures/unnamed-chunk-13-3.png" width="33%" />
+
+# geom\_candlestick summarize first, then interdependence …
 
 ## geom\_pie: **n-\>1:1:1**
 
@@ -418,11 +642,13 @@ library(ggcandlestick)
 
 # repurposing an existing stats
 
-## geom\_smoothfit: ggproto piggybacking
+## geom\_smoothfit: n:1:n ggproto piggybacking on compute…
 
 ``` r
 library(ggsmoothfit)
 ```
+
+n:1:80 is geom\_smooth default.
 
 ## geom\_barlab: Adding defaults to existing stats via ggproto editing
 
@@ -441,7 +667,7 @@ library(ggedgelist)
 # defining theme…
 
 ``` r
-library(ggchalkboard)
+#library(ggchalkboard)
 ```
 
 # pseudo extension?
@@ -455,11 +681,11 @@ library(ggstamp)
 ```
 
 ``` r
-library(ggcons) # 
+#library(ggcons) # 
 ```
 
 # ggtedious *formal testing*
 
 ``` r
-library(ggtedius)
+#library(ggtedius)
 ```

@@ -10,7 +10,7 @@ output:
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = F,
+  eval = T,
   fig.path = "man/figures/") 
 ```
 
@@ -95,15 +95,33 @@ And finally, finally to Hadley Wickham and Leland Wilkinson having incredible in
 
 data:n definding geom:geom
 
-## geom_coordinates: **1:1:1** 
+## geom_text_coordinate: **1:1:1** 
 
-*a row in the input dataframe will display a single geometry, which will be defined by as single row in the internal data*
+- for each row in the input dataframe ...
+- we'll perceive a single mark
+- which will be defined by as single row in the internal dataframe
 
 ```{r}
-ggxmean::geom_text_coordinate()
+library(ggplot2)
+library(ggxmean)
+
+ggplot(cars) + 
+  aes(x = speed, y = dist) + 
+  geom_point() + 
+  geom_text_coordinate(check_overlap = T,
+                       hjust = 0,
+                       vjust = 0)
 ```
 
-Note: in this situation, you can also get away with delayed aesthetic evaluation.  See also redefaulting.
+
+
+```{r, code = readLines("../ggxmean/R/geom_coordinates.R")}
+
+```
+
+Note: in this situation, you can also get away with delayed aesthetic evaluation.  And, see also redefaulting.
+
+
 
 
 ## geom_xy_means: **n:1:1** 
@@ -111,8 +129,32 @@ Note: in this situation, you can also get away with delayed aesthetic evaluation
 *many rows from a dataset: will be summarized and visualized by as single mark: the mark will be defined by one row of data*
 
 ```{r}
-ggxmean::geom_xy_means()
+ggplot(mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() + 
+  geom_xy_means(size = 8)
+
+last_plot() + 
+  aes(color = as.factor(am))
 ```
+
+#### build
+
+```{r, code = readLines("../ggxmean/R/geom_xy_means.R")}
+
+```
+
+
+
+## geom_hull: **n:1:k**
+
+from the ggplot2 vignette...
+
+```{}
+
+
+```
+
 
 ## geom_circle: **1:1:n** 
 
@@ -124,7 +166,6 @@ for each row in the dataframe, a single geometry is visualized, but each geom is
 
 
 ```{r}
-library(ggcircle)
 ```
 
 
@@ -133,7 +174,6 @@ library(ggcircle)
 *a many-row geom for each row of the input data frame, with interdependence between input observations.*
 
 ```{r}
-library(ggcirclepack)
 ```
 
 
@@ -142,7 +182,6 @@ library(ggcirclepack)
 *between-group computation*
 
 ```{r}
-library(ggols)
 ```
 
 
@@ -153,10 +192,11 @@ library(ggols)
 *a geom defined by an sf geometry column*
 
 ```{r}
-library(ggnorthcarolina)
 ```
 
 ## geom_waterfall: **1:1:1; interdependence**
+
+The function geom_waterfall() is exported from the ggwaterfall package, which is being developed at github.com/EvaMaeRey/ggwaterfall
 
 *One-row geom for each row in input dataset; geom interdependence*
 
@@ -209,16 +249,36 @@ Then, we bundle up this computation into a function (step 1), called compute_pan
 
 In step 3, we define stat_waterfall, passing along StatWaterfall to create a ggplot2 layer function. We include a standard set of arguments, and we set the geom to ggplot2::GeomRect.  
 
+```{r, code = readLines("../ggwaterfall/R/geom_waterfall.R")}
+```
 
 ### Step 4
 
 In Step 4, we get to try out the functionality.  
 
+```{r, out.width="33%", fig.show='hold'}
+flow_df |> 
+  ggplot() +
+  geom_hline(yintercept = 0) +
+  aes(change = change, 
+      x = event) + # event in order
+  geom_waterfall() + 
+  geom_waterfall_label() + 
+  scale_y_continuous(expand = expansion(.1)) + 
+  scale_fill_manual(values = c("springgreen4", "darkred"))
 
-# summarize first, then interdependence ...
+last_plot() + 
+  aes(x = fct_reorder(event, change))
+
+last_plot() + 
+  aes(x = fct_reorder(event, abs(change)))
+
+
+```
+
+# geom_candlestick summarize first, then interdependence ...
 
 ```{r}
-library(ggcandlestick)
 ```
 
 ## geom_pie: **n->1:1:1**
@@ -230,11 +290,14 @@ library(ggcandlestick)
 
 # repurposing an existing stats
 
-## geom_smoothfit:  ggproto piggybacking
+## geom_smoothfit: n:1:n ggproto piggybacking on compute...
 
 ```{r}
 library(ggsmoothfit)
 ```
+
+n:1:80 is geom_smooth default.
+
 
 ## geom_barlab:  Adding defaults to existing stats via ggproto editing
 
@@ -262,7 +325,7 @@ library(ggedgelist)
 # defining theme...
 
 ```{r}
-library(ggchalkboard)
+#library(ggchalkboard)
 ```
 
 # pseudo extension?
@@ -281,12 +344,12 @@ library(ggstamp)
 ```
 
 ```{r}
-library(ggcons) # 
+#library(ggcons) # 
 ```
 
 
 # ggtedious *formal testing*
 
 ```{r}
-library(ggtedius)
+#library(ggtedius)
 ```
