@@ -1,6 +1,7 @@
 
   - [ggplot2-extension-cookbook](#ggplot2-extension-cookbook)
   - [Preface and acknowledgements](#preface-and-acknowledgements)
+  - [Getting started](#getting-started)
   - [geom and stat layers](#geom-and-stat-layers)
       - [geom\_text\_coordinate: **1:1:1**](#geom_text_coordinate-111)
       - [geom\_xy\_means: **n:1:1**](#geom_xy_means-n11)
@@ -216,6 +217,14 @@ special guest, perhaps January 2025.
 
 And finally, finally to Hadley Wickham and Leland Wilkinson having
 incredible insights and acting on them.
+
+# Getting started
+
+For best results, I’d recommend *diving* in by actually creating some
+geoms as prompted in the ‘easy geom recipes’ tutorial. Having completed
+these exercises, you’ll have lived the geom creation from start to
+finish, will be well oriented to the consistent steps in the process for
+the patterns used in what follows.
 
 # geom and stat layers
 

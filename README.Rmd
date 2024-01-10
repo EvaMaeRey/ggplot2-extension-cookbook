@@ -93,6 +93,10 @@ Finally, to Winston Chang, who gets top billing in the ggplot2 extension vignett
 And finally, finally to Hadley Wickham and Leland Wilkinson having incredible insights and acting on them.  
 
 
+# Getting started
+
+For best results, I'd recommend *diving* in by actually creating some geoms as prompted in the 'easy geom recipes' tutorial.  Having completed these exercises, you'll have lived the geom creation from start to finish, will be well oriented to the consistent steps in the process for the patterns used in what follows. 
+
 # geom and stat layers
 
 data:n definding geom:geom
