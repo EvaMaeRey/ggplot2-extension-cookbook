@@ -29,13 +29,15 @@ We group the content by extension type, provide demonstrations of their use, and
 - Step 3: Pass ggproto to a user-facing function for use in a ggplot() pipeline
 - Step 4: Try out/test/enjoy!
 
-Furthermore, we'll try to orient with a ratio typology that you'll see in the section titles.  
+Currently, I'm experimenting with a ratio typology that you'll see in the section titles. 
+
+Regarding stat_'s vs. geom_'s, I take on geoms first, because they are more commonly used, perhaps because they are more concrete descriptive of what the creator envisions, where as stat might be more 'adverbial', a more nebulous, harder-to-think about layer description.
 
 Finally, most of the code is at the 'R for data science level, and not 'Advanced R' level, which hopefully will afford greater reach. 
 
 # Preface and acknowledgements
 
-I attended Thomas Lin Pederson's January 2020 talk 'Extending your ability to extend ggplot2' seated on the floor of a packed out ballroom.  The talk had the important central message - "you can be a ggplot2 extender".  And since then, I aimed to be an extender. I hope *ggplot2 Extension Cookbook* will help you in your extender journey and, if you are fluent in R and ggplot2, also says to you "you can be a ggplot2 extender".
+I attended Thomas Lin Pederson's January 2020 talk 'Extending your ability to extend ggplot2' seated on the floor of a packed out ballroom.  The talk had the important central message - "you can be a ggplot2 extender".  And since then, I aimed to be an extender. I hope that this *ggplot2 Extension Cookbook* will help you on your extender journey and, especially if you are fluent in R and ggplot2, it says to you "you can be a ggplot2 extender".
 
 I've been using ggplot2 since about 2017, and really enjoyed the user interface.  In general, the syntax does a fantastic job at letting users compose their plots bit-by-bit, closely resembling to how you might sketch out a plot on a notepad or blackboard, and describing your decisions as you go to yourself or a colleague.  Or as Thomas Lin Pederson has also said, 'ggplot2 lets you *speak your plot into existence*'.  And perhaps a little less eloquently by Hadley Wickham's, the ggplot2 author,  "This is what I'm thinking; your the computer, now go and do it!" (my paraphrase of the author talking about how he thought data viz should feel as a statistical consultant -- well before ggplot2 existed).
 
@@ -119,8 +121,6 @@ ggplot(cars) +
 
 ```
 
-Note: in this situation, you can also get away with delayed aesthetic evaluation.  And, see also redefaulting.
-
 
 
 
@@ -148,12 +148,87 @@ last_plot() +
 
 ## geom_hull: **n:1:k**
 
-from the ggplot2 vignette...
+rewriting a classic from the ggplot2 vignette...
 
-```{}
+```{r}
+library(tidyverse)
+chull_indeces <- chull(mtcars$wt, mtcars$mpg)
+chull_indeces
+mtcars_chull_subset <- mtcars %>% slice(chull_indeces)
 
-
+ggplot(mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() + 
+  geom_polygon(data = mtcars_chull_subset, 
+               alpha = .3, 
+               color = "black")
 ```
+
+
+### Step 1 and 2
+
+```{r}
+# Step 1
+compute_group_c_hull <- function(data, scales){
+  
+  keep_indeces <- chull(data$x, data$y)
+  
+  data %>% slice(keep_indeces)
+  
+}
+
+# Step 2
+StatChull <- ggproto(`_class` = "StatChull",
+                     `_inherit` = ggplot2::Stat,
+                     compute_group = compute_group_c_hull,
+                     required_aes = c("x", "y"))
+```
+
+### Compute test...
+
+```{r}
+mtcars %>% 
+  rename(x = wt, y = mpg) %>% 
+  compute_group_c_hull()
+```
+
+
+### Step 3. Write user-facing geom_/stat_ Function(s)
+
+```{r}
+geom_chull <- function(mapping = NULL, 
+                        data = NULL,
+                        position = "identity", 
+                        na.rm = FALSE, 
+                        show.legend = NA,
+                        inherit.aes = TRUE, ...) {
+
+  ggplot2::layer(
+    stat = StatChull, 
+    geom = ggplot2::GeomPolygon, 
+    data = data, mapping = mapping,
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+
+}
+```
+
+### Step 4. Try out/test/ enjoy
+
+```{r}
+ggplot(data = mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() + 
+  geom_chull(alpha = .3)
+
+last_plot() + 
+  aes(fill = factor(am), 
+      color = factor(am))
+```
+
 
 
 ## geom_circle: **1:1:n** 
@@ -290,7 +365,7 @@ last_plot() +
 
 # repurposing an existing stats
 
-## geom_smoothfit: n:1:n ggproto piggybacking on compute...
+## geom_smoothfit: **n:n:n** ggproto piggybacking on compute...
 
 ```{r}
 library(ggsmoothfit)
@@ -304,6 +379,83 @@ n:1:80 is geom_smooth default.
 ```{r}
 
 ```
+
+
+# keeping flexible via stat_* functions
+
+Rather than defining geom functions, you might instead 'stay flexible' with stat functions.  Let's contrast geom_chull and stat_chull below.
+
+```{r}
+geom_chull <- function(mapping = NULL, 
+                        data = NULL,
+                        position = "identity", 
+                        na.rm = FALSE, 
+                        show.legend = NA,
+                        inherit.aes = TRUE, ...) {
+
+  ggplot2::layer(
+    stat = StatChull, 
+    geom = ggplot2::GeomPolygon, 
+    data = data, mapping = mapping,
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+
+}
+
+
+stat_chull <- function(mapping = NULL, 
+                       geom = ggplot2::GeomPolygon, 
+                        data = NULL,
+                        position = "identity", 
+                        na.rm = FALSE, 
+                        show.legend = NA,
+                        inherit.aes = TRUE, ...) {
+
+  ggplot2::layer(
+    stat = StatChull, 
+    geom = geom, 
+    data = data, mapping = mapping,
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+
+}
+
+
+
+```
+
+The construction is almost identical.  However, in the stat version, the geom is flexible because it can be user defined, instead of being fixed in the function.  It's use allows you to go in different visual directions, but might have a higher cognative load.
+
+
+```{r}
+p <- ggplot(data = mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() 
+
+p +
+  stat_chull(alpha = .3)
+
+p +
+  stat_chull(geom = "point",
+             color = "red",
+             size = 4)
+
+p + 
+  stat_chull(geom = "text",
+             label = "c-hull point",
+             hjust = 0)
+
+
+```
+
+
+
 
 
 # modifying ggplot() function (data transformation)

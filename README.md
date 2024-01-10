@@ -6,6 +6,11 @@
       - [geom\_xy\_means: **n:1:1**](#geom_xy_means-n11)
           - [build](#build)
       - [geom\_hull: **n:1:k**](#geom_hull-n1k)
+          - [Step 1 and 2](#step-1-and-2)
+          - [Compute test…](#compute-test)
+          - [Step 3. Write user-facing geom\_/stat\_
+            Function(s)](#step-3-write-user-facing-geom_stat_-functions)
+          - [Step 4. Try out/test/ enjoy](#step-4-try-outtest-enjoy)
       - [geom\_circle: **1:1:n**](#geom_circle-11n)
       - [geom\_us\_state: **1:1:n**](#geom_us_state-11n)
       - [geom\_ggcirclepack: **1:1:n,
@@ -25,10 +30,12 @@
       - [geom\_pie: **n-\>1:1:1**](#geom_pie-n-111)
       - [geom\_wedge: **n-\>1:1:n**](#geom_wedge-n-11n)
   - [repurposing an existing stats](#repurposing-an-existing-stats)
-      - [geom\_smoothfit: n:1:n ggproto piggybacking on
-        compute…](#geom_smoothfit-n1n-ggproto-piggybacking-on-compute)
+      - [geom\_smoothfit: **n:n:n** ggproto piggybacking on
+        compute…](#geom_smoothfit-nnn-ggproto-piggybacking-on-compute)
       - [geom\_barlab: Adding defaults to existing stats via ggproto
         editing](#geom_barlab-adding-defaults-to-existing-stats-via-ggproto-editing)
+  - [keeping flexible via stat\_\*
+    functions](#keeping-flexible-via-stat_-functions)
   - [modifying ggplot() function (data
     transformation)](#modifying-ggplot-function-data-transformation)
   - [modifying ggraph() function](#modifying-ggraph-function)
@@ -62,8 +69,13 @@ extension:
     pipeline
   - Step 4: Try out/test/enjoy\!
 
-Furthermore, we’ll try to orient with a ratio typology that you’ll see
-in the section titles.
+Currently, I’m experimenting with a ratio typology that you’ll see in
+the section titles.
+
+Regarding stat\_‘s vs. geom\_’s, I take on geoms first, because they are
+more commonly used, perhaps because they are more concrete descriptive
+of what the creator envisions, where as stat might be more ’adverbial’,
+a more nebulous, harder-to-think about layer description.
 
 Finally, most of the code is at the ‘R for data science level, and not
 ’Advanced R’ level, which hopefully will afford greater reach.
@@ -73,10 +85,10 @@ Finally, most of the code is at the ‘R for data science level, and not
 I attended Thomas Lin Pederson’s January 2020 talk ‘Extending your
 ability to extend ggplot2’ seated on the floor of a packed out ballroom.
 The talk had the important central message - “you can be a ggplot2
-extender”. And since then, I aimed to be an extender. I hope *ggplot2
-Extension Cookbook* will help you in your extender journey and, if you
-are fluent in R and ggplot2, also says to you “you can be a ggplot2
-extender”.
+extender”. And since then, I aimed to be an extender. I hope that this
+*ggplot2 Extension Cookbook* will help you on your extender journey and,
+especially if you are fluent in R and ggplot2, it says to you “you can
+be a ggplot2 extender”.
 
 I’ve been using ggplot2 since about 2017, and really enjoyed the user
 interface. In general, the syntax does a fantastic job at letting users
@@ -297,9 +309,6 @@ geom_text_coordinate <- function(mapping = NULL, data = NULL,
 }
 ```
 
-Note: in this situation, you can also get away with delayed aesthetic
-evaluation. And, see also redefaulting.
-
 ## geom\_xy\_means: **n:1:1**
 
 *many rows from a dataset: will be summarized and visualized by as
@@ -372,11 +381,115 @@ geom_xy_means <- function(mapping = NULL, data = NULL,
 
 ## geom\_hull: **n:1:k**
 
-from the ggplot2 vignette…
+rewriting a classic from the ggplot2 vignette…
 
-``` 
+``` r
+library(tidyverse)
+#> ── Attaching core tidyverse packages ─────────────────── tidyverse 2.0.0.9000 ──
+#> ✔ dplyr     1.1.0     ✔ readr     2.1.4
+#> ✔ forcats   1.0.0     ✔ stringr   1.5.0
+#> ✔ lubridate 1.9.2     ✔ tibble    3.2.1
+#> ✔ purrr     1.0.1     ✔ tidyr     1.3.0
+#> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+#> ✖ dplyr::filter() masks stats::filter()
+#> ✖ dplyr::lag()    masks stats::lag()
+#> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+chull_indeces <- chull(mtcars$wt, mtcars$mpg)
+chull_indeces
+#>  [1] 17 16 15 24  7 29 21  3 28 20 18
+mtcars_chull_subset <- mtcars %>% slice(chull_indeces)
 
+ggplot(mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() + 
+  geom_polygon(data = mtcars_chull_subset, 
+               alpha = .3, 
+               color = "black")
 ```
+
+![](man/figures/unnamed-chunk-6-1.png)<!-- -->
+
+### Step 1 and 2
+
+``` r
+# Step 1
+compute_group_c_hull <- function(data, scales){
+  
+  keep_indeces <- chull(data$x, data$y)
+  
+  data %>% slice(keep_indeces)
+  
+}
+
+# Step 2
+StatChull <- ggproto(`_class` = "StatChull",
+                     `_inherit` = ggplot2::Stat,
+                     compute_group = compute_group_c_hull,
+                     required_aes = c("x", "y"))
+```
+
+### Compute test…
+
+``` r
+mtcars %>% 
+  rename(x = wt, y = mpg) %>% 
+  compute_group_c_hull()
+#>                        y cyl  disp  hp drat     x  qsec vs am gear carb
+#> Chrysler Imperial   14.7   8 440.0 230 3.23 5.345 17.42  0  0    3    4
+#> Lincoln Continental 10.4   8 460.0 215 3.00 5.424 17.82  0  0    3    4
+#> Cadillac Fleetwood  10.4   8 472.0 205 2.93 5.250 17.98  0  0    3    4
+#> Camaro Z28          13.3   8 350.0 245 3.73 3.840 15.41  0  0    3    4
+#> Duster 360          14.3   8 360.0 245 3.21 3.570 15.84  0  0    3    4
+#> Ford Pantera L      15.8   8 351.0 264 4.22 3.170 14.50  0  1    5    4
+#> Toyota Corona       21.5   4 120.1  97 3.70 2.465 20.01  1  0    3    1
+#> Datsun 710          22.8   4 108.0  93 3.85 2.320 18.61  1  1    4    1
+#> Lotus Europa        30.4   4  95.1 113 3.77 1.513 16.90  1  1    5    2
+#> Toyota Corolla      33.9   4  71.1  65 4.22 1.835 19.90  1  1    4    1
+#> Fiat 128            32.4   4  78.7  66 4.08 2.200 19.47  1  1    4    1
+```
+
+### Step 3. Write user-facing geom\_/stat\_ Function(s)
+
+``` r
+geom_chull <- function(mapping = NULL, 
+                        data = NULL,
+                        position = "identity", 
+                        na.rm = FALSE, 
+                        show.legend = NA,
+                        inherit.aes = TRUE, ...) {
+
+  ggplot2::layer(
+    stat = StatChull, 
+    geom = ggplot2::GeomPolygon, 
+    data = data, mapping = mapping,
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+
+}
+```
+
+### Step 4. Try out/test/ enjoy
+
+``` r
+ggplot(data = mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() + 
+  geom_chull(alpha = .3)
+```
+
+![](man/figures/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
+
+last_plot() + 
+  aes(fill = factor(am), 
+      color = factor(am))
+```
+
+![](man/figures/unnamed-chunk-10-2.png)<!-- -->
 
 ## geom\_circle: **1:1:n**
 
@@ -417,15 +530,6 @@ our plot – where one rectangle ends, the next in the series begins.
 ``` r
 library(ggwaterfall)
 library(tidyverse)
-#> ── Attaching core tidyverse packages ─────────────────── tidyverse 2.0.0.9000 ──
-#> ✔ dplyr     1.1.0     ✔ readr     2.1.4
-#> ✔ forcats   1.0.0     ✔ stringr   1.5.0
-#> ✔ lubridate 1.9.2     ✔ tibble    3.2.1
-#> ✔ purrr     1.0.1     ✔ tidyr     1.3.0
-#> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-#> ✖ dplyr::filter() masks stats::filter()
-#> ✖ dplyr::lag()    masks stats::lag()
-#> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 flow_df <- data.frame(event = c(
                      "Sales", 
                      "Refunds",
@@ -460,7 +564,7 @@ flow_df |>
   scale_fill_manual(values = c("springgreen4", "darkred"))
 ```
 
-![](man/figures/unnamed-chunk-10-1.png)<!-- -->
+![](man/figures/unnamed-chunk-15-1.png)<!-- -->
 
 The strategy to create geom waterfall follows the standard four steps.
 
@@ -632,7 +736,7 @@ last_plot() +
   aes(x = fct_reorder(event, abs(change)))
 ```
 
-<img src="man/figures/unnamed-chunk-13-1.png" width="33%" /><img src="man/figures/unnamed-chunk-13-2.png" width="33%" /><img src="man/figures/unnamed-chunk-13-3.png" width="33%" />
+<img src="man/figures/unnamed-chunk-18-1.png" width="33%" /><img src="man/figures/unnamed-chunk-18-2.png" width="33%" /><img src="man/figures/unnamed-chunk-18-3.png" width="33%" />
 
 # geom\_candlestick summarize first, then interdependence …
 
@@ -642,7 +746,7 @@ last_plot() +
 
 # repurposing an existing stats
 
-## geom\_smoothfit: n:1:n ggproto piggybacking on compute…
+## geom\_smoothfit: **n:n:n** ggproto piggybacking on compute…
 
 ``` r
 library(ggsmoothfit)
@@ -651,6 +755,89 @@ library(ggsmoothfit)
 n:1:80 is geom\_smooth default.
 
 ## geom\_barlab: Adding defaults to existing stats via ggproto editing
+
+# keeping flexible via stat\_\* functions
+
+Rather than defining geom functions, you might instead ‘stay flexible’
+with stat functions. Let’s contrast geom\_chull and stat\_chull below.
+
+``` r
+geom_chull <- function(mapping = NULL, 
+                        data = NULL,
+                        position = "identity", 
+                        na.rm = FALSE, 
+                        show.legend = NA,
+                        inherit.aes = TRUE, ...) {
+
+  ggplot2::layer(
+    stat = StatChull, 
+    geom = ggplot2::GeomPolygon, 
+    data = data, mapping = mapping,
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+
+}
+
+
+stat_chull <- function(mapping = NULL, 
+                       geom = ggplot2::GeomPolygon, 
+                        data = NULL,
+                        position = "identity", 
+                        na.rm = FALSE, 
+                        show.legend = NA,
+                        inherit.aes = TRUE, ...) {
+
+  ggplot2::layer(
+    stat = StatChull, 
+    geom = geom, 
+    data = data, mapping = mapping,
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+
+}
+```
+
+The construction is almost identical. However, in the stat version, the
+geom is flexible because it can be user defined, instead of being fixed
+in the function. It’s use allows you to go in different visual
+directions, but might have a higher cognative load.
+
+``` r
+p <- ggplot(data = mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() 
+
+p +
+  stat_chull(alpha = .3)
+```
+
+![](man/figures/unnamed-chunk-23-1.png)<!-- -->
+
+``` r
+
+p +
+  stat_chull(geom = "point",
+             color = "red",
+             size = 4)
+```
+
+![](man/figures/unnamed-chunk-23-2.png)<!-- -->
+
+``` r
+
+p + 
+  stat_chull(geom = "text",
+             label = "c-hull point",
+             hjust = 0)
+```
+
+![](man/figures/unnamed-chunk-23-3.png)<!-- -->
 
 # modifying ggplot() function (data transformation)
 
