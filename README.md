@@ -11,6 +11,7 @@
             object](#step-2-pass-to-ggproto-object)
           - [Step 3. Write user facing
             function.](#step-3-write-user-facing-function)
+          - [Step 4: Use/test/enjoy](#step-4-usetestenjoy)
       - [geom\_xy\_means: **n:1:1**](#geom_xy_means-n11)
           - [Step 0. Use base ggplot2](#step-0-use-base-ggplot2-1)
           - [Step 1. Write compute
@@ -19,14 +20,16 @@
             compute](#step-2-define-stat-pasing-in-compute)
           - [Step 3. Write user-facing
             function](#step-3-write-user-facing-function-1)
-          - [Step 4.](#step-4)
+          - [Step 4. Use/Test/Enjoy](#step-4-usetestenjoy-1)
       - [geom\_chull: **N:1:n**](#geom_chull-n1n)
           - [Step 1 and 2](#step-1-and-2)
           - [Step 3. Write user-facing geom\_/stat\_
             Function(s)](#step-3-write-user-facing-geom_stat_-functions)
           - [Step 4. Try out/test/ enjoy](#step-4-try-outtest-enjoy)
-      - [geom\_circle: **1:1:n**, new: defining compute\_panel in
-        ggproto](#geom_circle-11n-new-defining-compute_panel-in-ggproto)
+      - [geom\_ggcirclepack: **1:1:n, interdependance** *new*: defining
+        `compute_panel` in
+        ggproto](#geom_ggcirclepack-11n-interdependance-new-defining-compute_panel-in-ggproto)
+      - [geom\_circle: **1:1:n**,](#geom_circle-11n)
           - [Step 0. Do it with base
             ggplot2](#step-0-do-it-with-base-ggplot2)
           - [Step 1. Compute](#step-1-compute-1)
@@ -35,8 +38,6 @@
             stat\_\*](#step-3-write-geom_-or-stat_)
           - [Step 4: Enjoy (test)](#step-4-enjoy-test)
       - [geom\_us\_state: **1:1:n**](#geom_us_state-11n)
-      - [geom\_ggcirclepack: **1:1:n,
-        interdependance**](#geom_ggcirclepack-11n-interdependance)
       - [geom\_ols: **n:k:w;
         interdependence**](#geom_ols-nkw-interdependence)
       - [geom\_county: **1:1:1 via geometry
@@ -53,7 +54,7 @@
           - [Step 0](#step-0)
           - [Steps 1 and 2](#steps-1-and-2)
           - [Step 3](#step-3)
-          - [Step 4](#step-4-1)
+          - [Step 4](#step-4)
   - [borrowing compute](#borrowing-compute)
       - [geom\_smoothfit: **1:1:1** ggproto piggybacking on
         compute…](#geom_smoothfit-111-ggproto-piggybacking-on-compute)
@@ -80,7 +81,7 @@
 
 <!-- badges: end -->
 
-*The ggplot2 Extension Cookbook* aims to provide ggplot2 some extension
+This *ggplot2 Extension Cookbook* aims to provide ggplot2 some extension
 strategies in a consistent and accessible way.
 
 We group the content by extension type, provide demonstrations of their
@@ -102,8 +103,11 @@ may feel a be more ’adverbial’ and nebulous in their description of
 rendered output. Consider that ggplot(mtcars, aes(wt, mpg)) +
 stat\_identity() and ggplot(mtcars, aes(wt, mpg)) + geom\_point() render
 identical ggplot objects, but the later might feel more descriptive of
-the resultant plot. Furthermore, when it comes to excitement about
-ggplot2 extension packages, new geoms really rule the day, see
+the resultant plot. Between these two options, the preference for the
+geom evident in the data t; on Github, there are 788 R language files
+containing ‘stat\_identity’ whereas a staggering 261-thousand R language
+files contain ‘geom\_point’. Furthermore, when it comes to excitement
+about ggplot2 extension packages, new geoms really rule the day, see
 (<https://albert-rapp.de/posts/ggplot2-tips/20_ggplot_extensions/ggplot_extensions>;
 And slide 38 in C. Scherer’s ‘Favorite ggplot2 extensions’
 <https://www.cedricscherer.com/slides/RLadiesTunis-2021-favorite-ggplot-extensions.pdf>)
@@ -284,6 +288,8 @@ Having completed these exercises, you’ll have lived geom creations from
 start to finish, will be well oriented to the consistent patterns I use,
 to the extent possible, throughout the cookbook.
 
+![](man/figures/unnamed-chunk-3-1.png)<!-- -->
+
 # geom\_\*: writing new definitions for where and how of marks on ggplots
 
 This section tackles creating new geom\_\* layers. The strategy is to
@@ -317,7 +323,7 @@ cars |>
             vjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-3-1.png)<!-- -->
+![](man/figures/unnamed-chunk-6-1.png)<!-- -->
 
 Step 0.b But we might like the concise syntax…
 
@@ -386,7 +392,7 @@ ggplot(data = cars) +
     )
 ```
 
-![](man/figures/unnamed-chunk-7-1.png)<!-- -->
+![](man/figures/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 
@@ -411,6 +417,17 @@ geom_text_coordinate <- function(mapping = NULL,
 }
 ```
 
+### Step 4: Use/test/enjoy
+
+``` r
+ggplot(data = cars) + 
+  aes(x = speed, y = dist) + 
+  geom_point() + 
+  geom_text_coordinate()
+```
+
+![](man/figures/unnamed-chunk-11-1.png)<!-- -->
+
 ## geom\_xy\_means: **n:1:1**
 
 *many rows from a dataset: will be summarized and visualized by as
@@ -431,7 +448,7 @@ ggplot(mtcars) +
              size = 8)
 ```
 
-![](man/figures/unnamed-chunk-8-1.png)<!-- -->
+![](man/figures/unnamed-chunk-12-1.png)<!-- -->
 
 ### Step 1. Write compute function
 
@@ -479,7 +496,7 @@ geom_xy_means <- function(mapping = NULL,
 }
 ```
 
-### Step 4.
+### Step 4. Use/Test/Enjoy
 
 ``` r
 ggplot(mtcars) + 
@@ -488,15 +505,15 @@ ggplot(mtcars) +
   geom_xy_means(size = 8)
 ```
 
-![](man/figures/unnamed-chunk-12-1.png)<!-- -->
+![](man/figures/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
 
 last_plot() +
-  aes()
+  aes(color = am == 1)
 ```
 
-![](man/figures/unnamed-chunk-12-2.png)<!-- -->
+![](man/figures/unnamed-chunk-16-2.png)<!-- -->
 
 ## geom\_chull: **N:1:n**
 
@@ -527,7 +544,7 @@ ggplot(mtcars) +
                color = "black")
 ```
 
-![](man/figures/unnamed-chunk-13-1.png)<!-- -->
+![](man/figures/unnamed-chunk-17-1.png)<!-- -->
 
 ### Step 1 and 2
 
@@ -603,7 +620,7 @@ ggplot(data = mtcars) +
   geom_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-18-1.png)<!-- -->
+![](man/figures/unnamed-chunk-22-1.png)<!-- -->
 
 ``` r
 
@@ -612,11 +629,16 @@ last_plot() +
       fill = factor(am))
 ```
 
-![](man/figures/unnamed-chunk-18-2.png)<!-- -->
+![](man/figures/unnamed-chunk-22-2.png)<!-- -->
 
 -----
 
-## geom\_circle: **1:1:n**, new: defining compute\_panel in ggproto
+## geom\_ggcirclepack: **1:1:n, interdependance** *new*: defining `compute_panel` in ggproto
+
+*a many-row geom for each row of the input data frame, with
+interdependence between input observations.*
+
+## geom\_circle: **1:1:n**,
 
 *a single row in a dataframe: will be visualized by a single mark : the
 mark will be defined by many-row in an internal dataframe*
@@ -644,7 +666,7 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-43-1.png)<!-- -->
+![](man/figures/unnamed-chunk-47-1.png)<!-- -->
 
 ### Step 1. Compute
 
@@ -728,7 +750,7 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-47-1.png)<!-- -->
+![](man/figures/unnamed-chunk-51-1.png)<!-- -->
 
 ``` r
 
@@ -742,7 +764,7 @@ diamonds %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-47-2.png)<!-- -->
+![](man/figures/unnamed-chunk-51-2.png)<!-- -->
 
 ``` r
 
@@ -753,7 +775,7 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-47-3.png)<!-- -->
+![](man/figures/unnamed-chunk-51-3.png)<!-- -->
 
 ``` r
   
@@ -766,7 +788,7 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-47-4.png)<!-- -->
+![](man/figures/unnamed-chunk-51-4.png)<!-- -->
 
 ``` r
 
@@ -776,7 +798,7 @@ last_plot() +
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-47-5.png)<!-- -->
+![](man/figures/unnamed-chunk-51-5.png)<!-- -->
 
 ``` r
 
@@ -786,7 +808,7 @@ last_plot() +
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-47-6.png)<!-- -->
+![](man/figures/unnamed-chunk-51-6.png)<!-- -->
 
 ``` r
 
@@ -796,7 +818,7 @@ last_plot() +
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-47-7.png)<!-- -->
+![](man/figures/unnamed-chunk-51-7.png)<!-- -->
 
 ``` r
 
@@ -807,14 +829,9 @@ last_plot() +
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-47-8.png)<!-- -->
+![](man/figures/unnamed-chunk-51-8.png)<!-- -->
 
 ## geom\_us\_state: **1:1:n**
-
-## geom\_ggcirclepack: **1:1:n, interdependance**
-
-*a many-row geom for each row of the input data frame, with
-interdependence between input observations.*
 
 ## geom\_ols: **n:k:w; interdependence**
 
@@ -895,7 +912,7 @@ p +
   stat_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-26-1.png)<!-- -->
+![](man/figures/unnamed-chunk-30-1.png)<!-- -->
 
 ``` r
 
@@ -905,7 +922,7 @@ p +
              size = 4)
 ```
 
-![](man/figures/unnamed-chunk-26-2.png)<!-- -->
+![](man/figures/unnamed-chunk-30-2.png)<!-- -->
 
 ``` r
 
@@ -915,7 +932,7 @@ p +
              hjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-26-3.png)<!-- -->
+![](man/figures/unnamed-chunk-30-3.png)<!-- -->
 
 ``` r
 
@@ -928,7 +945,7 @@ p +
 #> Ignoring unknown parameters: `label` and `hjust`
 ```
 
-![](man/figures/unnamed-chunk-26-4.png)<!-- -->
+![](man/figures/unnamed-chunk-30-4.png)<!-- -->
 
 ## stat\_waterfall: **1:1:1; interdependence**
 
@@ -986,7 +1003,7 @@ flow_df |>
   scale_fill_manual(values = c("springgreen4", "darkred"))
 ```
 
-![](man/figures/unnamed-chunk-27-1.png)<!-- -->
+![](man/figures/unnamed-chunk-31-1.png)<!-- -->
 
 The strategy to create geom waterfall follows the standard four steps.
 
@@ -1104,7 +1121,7 @@ last_plot() +
   aes(x = fct_reorder(event, abs(change)))
 ```
 
-<img src="man/figures/unnamed-chunk-30-1.png" width="33%" /><img src="man/figures/unnamed-chunk-30-2.png" width="33%" /><img src="man/figures/unnamed-chunk-30-3.png" width="33%" />
+<img src="man/figures/unnamed-chunk-34-1.png" width="33%" /><img src="man/figures/unnamed-chunk-34-2.png" width="33%" /><img src="man/figures/unnamed-chunk-34-3.png" width="33%" />
 
 The final plot shows that while there are some convenience defaults for
 label and fill, these can be over-ridden.
@@ -1115,7 +1132,7 @@ last_plot() +
   aes(fill = NULL)
 ```
 
-![](man/figures/unnamed-chunk-31-1.png)<!-- -->
+![](man/figures/unnamed-chunk-35-1.png)<!-- -->
 
 # borrowing compute
 

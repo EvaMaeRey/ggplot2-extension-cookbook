@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-*The ggplot2 Extension Cookbook* aims to provide ggplot2 some extension strategies in a consistent and accessible way.
+This *ggplot2 Extension Cookbook* aims to provide ggplot2 some extension strategies in a consistent and accessible way.
 
 We group the content by extension type, provide demonstrations of their use, and then link (for now) to the code that defines them.  In that material, I'll try to stick to a formula to orient you to the ggplot2 extension:
 
@@ -33,7 +33,7 @@ We group the content by extension type, provide demonstrations of their use, and
 
 
 
-Regarding stat_'s vs. geom_'s, I take a geoms-first approach, because they are more commonly used.  I suspect this is they are more concrete descriptive of what the creator envisions for her plot, whereas stat_* may feel a be more 'adverbial' and nebulous in their description of rendered output. Consider that ggplot(mtcars, aes(wt, mpg)) + stat_identity() and ggplot(mtcars, aes(wt, mpg)) + geom_point() render identical ggplot objects, but the later might feel more descriptive of the resultant plot.  Furthermore, when it comes to excitement about ggplot2 extension packages, new geoms really rule the day, see (https://albert-rapp.de/posts/ggplot2-tips/20_ggplot_extensions/ggplot_extensions; And slide 38 in C. Scherer's 'Favorite ggplot2 extensions' https://www.cedricscherer.com/slides/RLadiesTunis-2021-favorite-ggplot-extensions.pdf)
+Regarding stat_'s vs. geom_'s, I take a geoms-first approach, because they are more commonly used.  I suspect this is they are more concrete descriptive of what the creator envisions for her plot, whereas stat_* may feel a be more 'adverbial' and nebulous in their description of rendered output. Consider that ggplot(mtcars, aes(wt, mpg)) + stat_identity() and ggplot(mtcars, aes(wt, mpg)) + geom_point() render identical ggplot objects, but the later might feel more descriptive of the resultant plot. Between these two options, the preference for the geom evident in the data t; on Github, there are 788 R language files containing 'stat_identity' whereas a staggering 261-thousand R language files contain 'geom_point'.  Furthermore, when it comes to excitement about ggplot2 extension packages, new geoms really rule the day, see (https://albert-rapp.de/posts/ggplot2-tips/20_ggplot_extensions/ggplot_extensions; And slide 38 in C. Scherer's 'Favorite ggplot2 extensions' https://www.cedricscherer.com/slides/RLadiesTunis-2021-favorite-ggplot-extensions.pdf)
 
 Finally, most of the code is at the 'R for data science level, and not 'Advanced R' level, which hopefully will afford greater reach.  Object oriented programming (OOP) gets top billing in many extension materials, but many folks that *are* fluent in ggplot2 might *not* know much about OOP.  So, I try to see what can be accomplished with little emphasis on OOP and ggroto.
 
@@ -115,6 +115,116 @@ And finally, finally to Hadley Wickham and Leland Wilkinson having incredible in
 For best results, I'd recommend *diving* in by actually creating some geoms as prompted in the 'easy geom recipes' tutorial using the rendered [tutorial](https://evamaerey.github.io/easy-geom-recipes/easy_geom_recipes_compute_group.html) or [text .Rmd file](https://raw.githubusercontent.com/EvaMaeRey/easy-geom-recipes/main/easy_geom_recipes_compute_group.Rmd). The 'easy recipes' contain 3 fully worked examples, and 3 exercises that extend the lessons in the examples.
 
 Having completed these exercises, you'll have lived geom creations from start to finish, will be well oriented to the consistent patterns I use, to the extent possible, throughout the cookbook. 
+
+
+```{r, echo = F, warning=F, message=F}
+
+steps <- c("Step 0:\nget job done with 'base' ggplot2",
+"Step 1:\nWrite a function for the 'compute'",
+"Step 2:\nPass the compute to ggproto",
+"Step 3:\nPass ggproto to user-facing function",
+"Step 4:\nTry out/test/enjoy!") 
+library(ggraph)
+
+tibble(steps = rev(steps)) %>% 
+  mutate(lag(steps)) %>% 
+  remove_missing() %>% 
+  ggedgelist:::ggedgelist(layout = "kk") + 
+  ggraph:::geom_edge_link(color = "orange") +
+  ggraph:::geom_node_point(size = 14,
+                  color = "steelblue",
+                  alpha = .8) + 
+  ggraph:::geom_node_label(aes(label = name), size = 6,
+                           color = "steelblue",
+                  alpha = .95)
+
+# ggcanvas() + 
+#   stamp_label(label = "Step 0:\nuse 'base' ggplot2", x = 0, y = 0, hjust = 0) + 
+#   stamp_label(label = "Step 1:\nwrite compute function", x = 1, y = -1, hjust = 0) + 
+#   stamp_label(label = "Step 2:\ndefine ggproto", x = 2, y = -2, hjust = 0) +
+#   stamp_label(label = "Step 3:\nWrite user-facing function", x = 3, y = -3, hjust = 0) + 
+#   stamp_label(label = "Step 4:\nUse/test/enjoy", x = 4, y = -4, hjust = 0) + 
+#   theme_void_fill(fill = "cadetblue") + 
+#   coord_cartesian(xlim = c(0,7), ylim = c(-5, 1))
+```
+
+
+```{r, echo = F}
+'mtcar_xy_means <- mtcars |>
+  summarize(wt_mean = mean(wt),
+            mpg_mean = mean(mpg))
+
+ggplot(mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() + 
+  geom_point(data = mtcar_xy_means,
+             aes(x = wt_mean, y = mpg_mean),
+             size = 8)' ->
+s0
+
+
+'compute_group_means <- function(data, scales){
+  
+  data %>% 
+    summarise(x = mean(x),
+              y = mean(y))
+  
+}' ->
+  s1
+
+
+'StatXymean <- ggplot2::ggproto("StatXymean",
+                               ggplot2::Stat,
+                               compute_group = compute_group_means,
+                               required_aes = c("x", "y")
+)'->
+  s2
+
+
+'geom_xy_means <- function(mapping = NULL, 
+                          data = NULL,
+                          position = "identity", 
+                          na.rm = FALSE, 
+                          show.legend = NA,
+                          inherit.aes = TRUE, ...) {
+
+  ggplot2::layer(
+    stat = StatXymean, 
+    geom = ggplot2::GeomPoint, 
+    data = data, 
+    mapping = mapping,
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+
+}'-> s3
+
+'ggplot(mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() + 
+  geom_xy_means(size = 8)' -> s4
+
+c(s0, s1, s2, s3, s4) -> steps
+```
+
+
+```{r, fig.width=15, fig.height=10, echo = F, message = F, eval = F}
+tibble(steps = rev(steps)) %>% 
+  mutate(lag(steps)) %>% 
+  remove_missing() %>% 
+  ggedgelist:::ggedgelist(layout = "kk") + 
+  ggraph:::geom_edge_link(color = "orange") +
+  ggraph:::geom_node_point(size = 14,
+                  color = "steelblue",
+                  alpha = .8) + 
+  ggraph:::geom_node_label(aes(label = name), size = 4,
+                           color = "steelblue", hjust = 0, vjust = 1,
+                  alpha = .95)
+```
+
+
 
 # geom_*: writing new definitions for where and how of marks on ggplots
 
@@ -222,6 +332,14 @@ geom_text_coordinate <- function(mapping = NULL,
 ```
 
 
+### Step 4: Use/test/enjoy
+
+```{r}
+ggplot(data = cars) + 
+  aes(x = speed, y = dist) + 
+  geom_point() + 
+  geom_text_coordinate()
+```
 
 
 
@@ -292,7 +410,7 @@ geom_xy_means <- function(mapping = NULL,
 }
 ```
 
-### Step 4. 
+### Step 4. Use/Test/Enjoy
 
 ```{r}
 ggplot(mtcars) + 
@@ -301,7 +419,7 @@ ggplot(mtcars) +
   geom_xy_means(size = 8)
 
 last_plot() +
-  aes()
+  aes(color = am == 1)
 
 ```
 
@@ -401,8 +519,15 @@ last_plot() +
 
 ---
 
+## geom_ggcirclepack: **1:1:n, interdependance**  *new*: defining `compute_panel` in ggproto
 
-## geom_circle: **1:1:n**, new: defining compute_panel in ggproto
+*a many-row geom for each row of the input data frame, with interdependence between input observations.*
+
+```{r}
+```
+
+
+## geom_circle: **1:1:n**, 
 
 *a single row in a dataframe: will be visualized by a single mark : the mark will be defined by many-row in an internal dataframe*
 
@@ -420,12 +545,7 @@ for each row in the dataframe, a single geometry is visualized, but each geom is
 ```
 
 
-## geom_ggcirclepack: **1:1:n, interdependance**
 
-*a many-row geom for each row of the input data frame, with interdependence between input observations.*
-
-```{r}
-```
 
 
 ## geom_ols: **n:k:w; interdependence**
