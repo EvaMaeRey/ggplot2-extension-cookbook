@@ -1,6 +1,9 @@
 ---
-output: rmdformats::readthedown
+output: 
+  github_document:
+    toc: TRUE
 ---
+
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -18,7 +21,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-*The ggplot2 Extension Cookbook* aims to provide ggplot2 extension strategies in a consistent and accessible way.
+*The ggplot2 Extension Cookbook* aims to provide ggplot2 some extension strategies in a consistent and accessible way.
 
 We group the content by extension type, provide demonstrations of their use, and then link (for now) to the code that defines them.  In that material, I'll try to stick to a formula to orient you to the ggplot2 extension:
 
@@ -28,11 +31,15 @@ We group the content by extension type, provide demonstrations of their use, and
 - Step 3: Pass ggproto to a user-facing function for use in a ggplot() pipeline
 - Step 4: Try out/test/enjoy!
 
-Regarding stat_'s vs. geom_'s, I take a geoms-first approach, because they are more commonly used.  I suspect this is they are more concrete descriptive of what the creator envisions for her plot, whereas stat_* may feel a be more 'adverbial' and nebulous in their description of rendered output. 
 
-Finally, most of the code is at the 'R for data science level, and not 'Advanced R' level, which hopefully will afford greater reach.  Object oriented programming (OOP) gets top billing in many extension materials, but many folks that are fluent in ggplot2 might not know much about OOP, in general, I try to see what can be accomplished while without much OOP and ggroto discussion.
+
+Regarding stat_'s vs. geom_'s, I take a geoms-first approach, because they are more commonly used.  I suspect this is they are more concrete descriptive of what the creator envisions for her plot, whereas stat_* may feel a be more 'adverbial' and nebulous in their description of rendered output. Consider that ggplot(mtcars, aes(wt, mpg)) + stat_identity() and ggplot(mtcars, aes(wt, mpg)) + geom_point() render identical ggplot objects, but the later might feel more descriptive of the resultant plot.  Furthermore, when it comes to excitement about ggplot2 extension packages, new geoms really rule the day, see (https://albert-rapp.de/posts/ggplot2-tips/20_ggplot_extensions/ggplot_extensions; And slide 38 in C. Scherer's 'Favorite ggplot2 extensions' https://www.cedricscherer.com/slides/RLadiesTunis-2021-favorite-ggplot-extensions.pdf)
+
+Finally, most of the code is at the 'R for data science level, and not 'Advanced R' level, which hopefully will afford greater reach.  Object oriented programming (OOP) gets top billing in many extension materials, but many folks that *are* fluent in ggplot2 might *not* know much about OOP.  So, I try to see what can be accomplished with little emphasis on OOP and ggroto.
 
 *Currently, I'm experimenting with a ratio typology that you'll see in the section titles. The idea is to think about how the input data relates to the mark we see on the plot and in turn how the mark's information is stored in the the ggplot2 object. This is really new, and I'm unsure of how productive or precise it can be...*
+
+Overall, I think the resources in thisggplot2 extension cookbook are aligned with the findings in ['10 Things Software Developers Should Learn about Learning']( https://cacm.acm.org/magazines/2024/1/278891-10-things-software-developers-should-learn-about-learning/fulltext)
 
 # Preface and acknowledgements
 
@@ -46,7 +53,7 @@ However, I experienced about a year of failure and frustration when first enteri
 
 I'm grateful for several expediences and the efforts of others that have refined these new materials.  First, just after getting my own feet wet in extension, I had the chance to work on extension with students in the context of independent studies.  Our focus was the same type of extension that Pederson demonstrated -- a geom that used a Stat to do some computational work, and then inherited the rest of its behavior from a more primitive geom.  
 
-Working with first and second year undergrad students meant that I had to think about and formulate workflow - where reference material would even be accessibility to very new R users. As veterans of just one or two stats classes that used R and ggplot2, what would they find familiar and accessible?  What might we be able to de-emphasize and still succeed?  I'm grateful to these  This worked with students and I had a chance to refine it further. 
+Working with first and second year undergrad students meant that I had to think about and formulate workflow - where reference material would even be accessibility to very new R users. As veterans of just one or two stats classes that used R and ggplot2, what would they find familiar and accessible?  What might we be able to de-emphasize ggproto and OOP in R which they hadn't covered and still succeed? Working with students, I had a wonderful chance to refine extension workflow futher.
 
 The following steps emerged and persisted into our tutorial formula:
 
@@ -70,25 +77,24 @@ Among my favorite quotation from the focus groups is something that validated th
 
 To that participant, I'd say 'Sometimes it *is* that easy'.  But he is right, that often times I come to an extension problem and am suprised that the strategy that I think is going to work doesn't, or at least not without a little fiddling.   
 
-The feedback on the easy-geom-recipes was collected in March 2023. 
+The [feedback on the easy-geom-recipes](https://github.com/EvaMaeRey/easy-geom-recipes) was collected in March 2023. 
 
-So, I'm interested in simply developing new, useful extensions. 
 
-To try to make those experiences valuable to others, I follow the 'recipe' formula as much as possible so that as strategies morph, one still recognizes where we are at a high-level in the process.
+To try to make those experiences valuable to others, I follow the 'recipe' formula as much as possible so that as strategies morph, one still recognizes 'where we are' at a high-level in the process.
 
 Now to serve the community and for use in this *ggplot2 Extension Cookbook*, I'm using an in-README documentation strategy for my ggplot2 extension packages so that the development stories are in one place instead of scattered between package files. 
 
+So, I'm interested in simply developing new, useful extensions. 
+
 This is made possible via the readme2pkg R package and in turn the knitr package written by Yihui Xie, whose tools (literate programming, xaringan and other tools) had already played a huge role in my relationship with ggplot2.  Before arriving at this solution, I felt that I'd need to divide my energy between moving forward in my own extension development journey and educator.  I'm grateful that with the magic of knitr::knitr_code$get() I allow code to sit in the README narrative and also send it to the required .R directory to serve in the package. 
 
-```{r, e}
+```{r, echo = F, eval = T}
 readlines_wo_roxygen <- function(x = "../ggwaterfall/R/StatWaterfall.R"){
   
   lines <- readLines(x) 
   lines[!stringr::str_detect(lines, "^#'")]
   
 }
-
-readlines_wo_roxygen()
 ```
 
 At present, I'll just show examples of functionality, and then link to the READMEs for further investigation of the specific recipes/strategies used. 
@@ -106,7 +112,9 @@ And finally, finally to Hadley Wickham and Leland Wilkinson having incredible in
 
 # Getting started
 
-For best results, I'd recommend *diving* in by actually creating some geoms as prompted in the 'easy geom recipes' tutorial.  Having completed these exercises, you'll have lived the geom creation from start to finish, will be well oriented to the consistent steps in the process for the patterns used in what follows. 
+For best results, I'd recommend *diving* in by actually creating some geoms as prompted in the 'easy geom recipes' tutorial using the rendered [tutorial](https://evamaerey.github.io/easy-geom-recipes/easy_geom_recipes_compute_group.html) or [text .Rmd file](https://raw.githubusercontent.com/EvaMaeRey/easy-geom-recipes/main/easy_geom_recipes_compute_group.Rmd). The 'easy recipes' contain 3 fully worked examples, and 3 exercises that extend the lessons in the examples.
+
+Having completed these exercises, you'll have lived geom creations from start to finish, will be well oriented to the consistent patterns I use, to the extent possible, throughout the cookbook. 
 
 # geom_*: writing new definitions for where and how of marks on ggplots
 
@@ -118,11 +126,14 @@ This section tackles creating new geom_* layers.  The strategy is to look at com
 - we'll perceive a single mark
 - which will be defined by as single row in the internal dataframe
 
+
+### Step 0: use base ggplot2
+
 ```{r}
 library(tidyverse)
 library(ggxmean)
 
-cars %>% 
+cars |>
   mutate(coords = 
            paste0("(", speed, ",", dist, ")")) |>
   ggplot() + 
@@ -134,7 +145,7 @@ cars %>%
             vjust = 0)
 ```
 
-But we'd like the syntax...
+Step 0.b But we might like the concise syntax...
 
 ```{r, eval = F}
 ggplot(cars) + 
@@ -153,9 +164,8 @@ ggplot(cars) +
 compute_group_coordinates <- function(data, scales) {
 
 data |>
-    dplyr::mutate(label = 
-                    paste0("(", data$x, ", ", 
-                           data$y, ")"))
+    mutate(label = 
+             paste0("(", data$x, ", ", data$y, ")"))
 }
 
 cars %>% 
@@ -164,20 +174,23 @@ cars %>%
   head()
 ```
 
-# Step 2: pass to ggproto object
+### Step 2: pass to ggproto object
 
 ```{r}
-StatCoordinate <- ggplot2::ggproto(`_class` = "StatCoordinate",
-                 `_inherit` = ggplot2::Stat,
-                 required_aes = c("x", "y"),
-                 compute_group = compute_group_coordinates)
-
+StatCoordinate <- ggplot2::ggproto(
+  `_class` = "StatCoordinate",
+  `_inherit` = ggplot2::Stat,
+  required_aes = c("x", "y"),
+  compute_group = compute_group_coordinates
+  )
 ```
 
-Step 3. Write user facing function.
+### Step 3. Write user facing function.
+
+A user-facing geom_* function will use the gggplot2::layer function under the hood.  geom_layer is actually an exported function in ggplot2 and can be used directly in ggplot() pipelines as shown below; however for convenience, the layer() function usually wrapped to have a fixed stat or fixed geom.  In geom_text_coordinate, because the use-scope is so narrow, both the stat and geom are 'hard-coded' in the layer. 
 
 ```{r}
-# part a. use ggplot2::layer which requires specifying Geom and Stat
+# part 3.0 use ggplot2::layer which requires specifying Geom and Stat
 ggplot(data = cars) + 
   aes(x = speed, y = dist) + 
   geom_point() + 
@@ -209,10 +222,6 @@ geom_text_coordinate <- function(mapping = NULL,
 ```
 
 
-```{r}
-
-
-```
 
 
 
@@ -220,27 +229,89 @@ geom_text_coordinate <- function(mapping = NULL,
 
 *many rows from a dataset: will be summarized and visualized by as single mark: the mark will be defined by one row of data*
 
+### Step 0.  Use base ggplot2
+
+```{r}
+mtcar_xy_means <- mtcars |>
+  summarize(wt_mean = mean(wt),
+            mpg_mean = mean(mpg))
+
+ggplot(mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() + 
+  geom_point(data = mtcar_xy_means,
+             aes(x = wt_mean, y = mpg_mean),
+             size = 8)
+```
+
+### Step 1. Write compute function
+
+```{r}
+compute_group_means <- function(data, scales){
+  
+  data %>% 
+    summarise(x = mean(x),
+              y = mean(y))
+  
+}
+```
+
+
+
+### Step 2. Define Stat, pasing in compute
+
+```{r}
+StatXymean <- ggplot2::ggproto("StatXymean",
+                               ggplot2::Stat,
+                               compute_group = compute_group_means,
+                               required_aes = c("x", "y")
+)
+```
+
+### Step 3. Write user-facing function 
+
+```{r}
+geom_xy_means <- function(mapping = NULL, 
+                          data = NULL,
+                          position = "identity", 
+                          na.rm = FALSE, 
+                          show.legend = NA,
+                          inherit.aes = TRUE, ...) {
+
+  ggplot2::layer(
+    stat = StatXymean, 
+    geom = ggplot2::GeomPoint, 
+    data = data, 
+    mapping = mapping,
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+
+}
+```
+
+### Step 4. 
+
 ```{r}
 ggplot(mtcars) + 
   aes(x = wt, y = mpg) + 
   geom_point() + 
   geom_xy_means(size = 8)
 
-last_plot() + 
-  aes(color = as.factor(am))
-```
-
-#### build
-
-```{r, code = readLines("../ggxmean/R/geom_xy_means.R")}
+last_plot() +
+  aes()
 
 ```
 
 
+## geom_chull: **N:1:n**
 
-## geom_chull: **n:1:k**
+This example uses the chull function in R, which 'computes the subset of points which lie on the convex hull of the set of points specified.'  In layman's terms if you had a bunch of nails hammered into a board and put a rubber-band around them, the convex hull would be defined by the subset of nails touching the rubberband. 
 
-rewriting a classic from the ggplot2 vignette...
+I'm especially excited to include this example, reworked using the Step 0-4 approach, because ultimately looking at the ggplot2 extension vignette on stat_chull and geom_chull was the beginning of layer extension unlocking for me.
+https://ggplot2.tidyverse.org/articles/extending-ggplot2.html#creating-a-new-stat
 
 ```{r}
 library(tidyverse)
@@ -255,6 +326,9 @@ ggplot(mtcars) +
                alpha = .3, 
                color = "black")
 ```
+
+
+
 
 
 ### Step 1 and 2
@@ -328,11 +402,16 @@ last_plot() +
 ---
 
 
-## geom_circle: **1:1:n** 
+## geom_circle: **1:1:n**, new: defining compute_panel in ggproto
 
-*a single row in a dataframe: will be visualized by a single mark: the mark will be defined by many-row in an internal dataframe*
+*a single row in a dataframe: will be visualized by a single mark : the mark will be defined by many-row in an internal dataframe*
 
 for each row in the dataframe, a single geometry is visualized, but each geom is defined by many rows...
+
+
+```{r, child = "../mytidytuesday/2023-12-27-geom_circle_via_join/geom_circle_via_join.Rmd"}
+
+```
 
 ## geom_us_state: **1:1:n**
 
@@ -477,14 +556,9 @@ In this example we'll see how to alias the stat to a geom user-facing function (
 ```{r, eval = T}
 library(ggwaterfall)
 library(tidyverse)
-flow_df <- data.frame(event = c(
-                     "Sales", 
-                     "Refunds",
-                     "Payouts", 
-                     "Court Losses", 
-                     "Court Wins", 
-                     "Contracts", 
-                     "Fees"),
+flow_df <- data.frame(
+  event = c("Sales", "Refunds", "Payouts", "Court Losses", 
+            "Court Wins", "Contracts", "Fees"),
            change = c(6400, -1100, 
                       -100, -4200, 3800, 
                       1400, -2800)) |> 
@@ -595,7 +669,7 @@ library(ggedgelist)
 
 
 
-# defining theme...
+# theme_chalkboard()
 
 ```{r}
 #library(ggchalkboard)
@@ -620,8 +694,18 @@ library(ggstamp)
 ```
 
 
-# ggtedious *formal testing*
+# make it a package:  ggtedious *formal testing*
+
+This is a placeholder for the ggtedious workshop, yet to be completed.
 
 ```{r}
 #library(ggtedius)
+```
+
+
+```{r, echo = F, eval = F}
+'---
+output: rmdformats::readthedown
+---' -> output_yaml
+rmarkdown::render("README.rmd", output_file = "docs/index.html", output_yaml = output_yaml)
 ```

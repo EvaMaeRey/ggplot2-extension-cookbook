@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-*The ggplot2 Extension Cookbook* aims to provide ggplot2 extension strategies in a consistent and accessible way.
+*The ggplot2 Extension Cookbook* aims to provide ggplot2 some extension strategies in a consistent and accessible way.
 
 We group the content by extension type, provide demonstrations of their use, and then link (for now) to the code that defines them.  In that material, I'll try to stick to a formula to orient you to the ggplot2 extension:
 
@@ -28,7 +28,8 @@ We group the content by extension type, provide demonstrations of their use, and
 - Step 3: Pass ggproto to a user-facing function for use in a ggplot() pipeline
 - Step 4: Try out/test/enjoy!
 
-Regarding stat_'s vs. geom_'s, I take a geoms-first approach, because they are more commonly used.  I suspect this is they are more concrete descriptive of what the creator envisions for her plot, whereas stat_* may feel a be more 'adverbial' and nebulous in their description of rendered output. 
+Regarding stat_'s vs. geom_'s, I take a geoms-first approach, because they are more commonly used.  I suspect this is they are more concrete descriptive of what the creator envisions for her plot, whereas stat_* may feel a be more 'adverbial' and nebulous in their description of rendered output. For example `ggplot(mtcars, aes(wt, mpg)) + stat_identity()` and
+`ggplot(mtcars, aes(wt, mpg)) + geom_point()`  render identical ggplot objects, but the later might feel more descriptive of the resultant plot. Between these two options, the preference for the geom evident in the data too; on Github, there are 788 R language files containing 'stat_identity' whereas a staggering 261-thousand R language files contain 'geom_point'. 
 
 Finally, most of the code is at the 'R for data science level, and not 'Advanced R' level, which hopefully will afford greater reach.  Object oriented programming (OOP) gets top billing in many extension materials, but many folks that are fluent in ggplot2 might not know much about OOP, in general, I try to see what can be accomplished while without much OOP and ggroto discussion.
 
