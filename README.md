@@ -13,7 +13,8 @@
           - [Step 3. Write user facing
             function.](#step-3-write-user-facing-function)
           - [Step 4: Use/test/enjoy](#step-4-usetestenjoy)
-      - [geom\_post: **1:1:1**](#geom_post-111)
+      - [geom\_post: **1:1:1** 🚧 *this is a nice example.
+        Add\!*](#geom_post-111--this-is-a-nice-example-add)
       - [geom\_xy\_means: **n:1:1**](#geom_xy_means-n11)
           - [Step 0. Use base ggplot2](#step-0-use-base-ggplot2-1)
           - [Step 1. Write compute
@@ -34,14 +35,17 @@
       - [geom\_ggcirclepack: **1:1:n, interdependance** *new*: defining
         `compute_panel` in
         ggproto](#geom_ggcirclepack-11n-interdependance-new-defining-compute_panel-in-ggproto)
-          - [Step 0.](#step-0)
+          - [Step 0. 🚧 *Add how-to w/ base
+            ggplot2*](#step-0--add-how-to-w-base-ggplot2)
           - [Step 1. Compute](#step-1-compute-2)
           - [Step 2. pass to ggproto
             object](#step-2-pass-to-ggproto-object-1)
           - [Step 3. pass to user-facing
             function](#step-3-pass-to-user-facing-function)
           - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-2)
-      - [geom\_circle: **1:1:n**,](#geom_circle-11n)
+      - [geom\_circle: **1:1:n**, 🚧 *clarify the reason compute\_panel
+        is
+        needed*](#geom_circle-11n--clarify-the-reason-compute_panel-is-needed)
           - [Step 0. Do it with base
             ggplot2](#step-0-do-it-with-base-ggplot2)
           - [Step 1. Compute](#step-1-compute-3)
@@ -52,16 +56,21 @@
           - [Why not compute\_group?](#why-not-compute_group)
       - [geom\_state: **1:1:n**](#geom_state-11n)
           - [Step 0: use base ggplot2](#step-0-use-base-ggplot2-2)
-          - [Step 1: Write compute
-            function](#step-1-write-compute-function-1)
-          - [Step 3. Pass to user-facing
-            function..](#step-3-pass-to-user-facing-function-1)
-          - [Step 4. Use/Test/Enjoy](#step-4-usetestenjoy-3)
+          - [Step 1: Write compute function
+            🚧](#step-1-write-compute-function-)
+          - [Step 3. Pass to user-facing function..
+            🚧](#step-3-pass-to-user-facing-function-)
+          - [Step 4. Use/Test/Enjoy 🚧](#step-4-usetestenjoy-)
       - [geom\_ols: **n:k:w;
         interdependence**](#geom_ols-nkw-interdependence)
       - [geom\_county: **1:1:1 via geometry
         sf**](#geom_county-111-via-geometry-sf)
-          - [Step 1, 2, 3. compute](#step-1-2-3-compute)
+          - [Step 0 🚧 *add example*](#step-0--add-example)
+          - [Step 1, 2, 3. compute 🚧 *want to see if xmin, xmax columns
+            can be added within compute using ggplot2 function; more to
+            figure out with
+            CRSs*](#step-1-2-3-compute--want-to-see-if-xmin-xmax-columns-can-be-added-within-compute-using-ggplot2-function-more-to-figure-out-with-crss)
+          - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-3)
           - [Step 2.](#step-2)
       - [geom\_candlestick summarize first, then interdependence
         …](#geom_candlestick-summarize-first-then-interdependence-)
@@ -72,13 +81,15 @@
       - [stat\_chull](#stat_chull)
       - [stat\_waterfall: **1:1:1;
         interdependence**](#stat_waterfall-111-interdependence)
-          - [Step 0](#step-0-1)
+          - [Step 0](#step-0)
           - [Steps 1 and 2](#steps-1-and-2)
           - [Step 3](#step-3)
           - [Step 4](#step-4)
   - [borrowing compute](#borrowing-compute)
       - [geom\_smoothfit: **1:1:1** ggproto piggybacking on
         compute…](#geom_smoothfit-111-ggproto-piggybacking-on-compute)
+          - [Step 2](#step-2-1)
+          - [Step 3](#step-3-1)
   - [add default aesthetics](#add-default-aesthetics)
       - [geom\_barlab: Adding defaults to existing stats via ggproto
         editing](#geom_barlab-adding-defaults-to-existing-stats-via-ggproto-editing)
@@ -131,18 +142,19 @@ packages and [‘Favorite ggplot2 extensions’](Scherer%202021) slide 38 in
 C. Scherer’s
 <https://www.cedricscherer.com/slides/RLadiesTunis-2021-favorite-ggplot-extensions.pdf>)
 
-Regarding focus on stat\_‘s vs. geom\_’s, I take a geoms-first approach,
-because they are more commonly used. I suspect geom\_\* function names
-are more concrete descriptions of what the creator envisions for her
-plot, whereas stat function names may feel a be more ’adverbial’ and
-nebulous in their description of rendered output. Consider that
-ggplot(mtcars, aes(wt, mpg)) + stat\_identity() and ggplot(mtcars,
-aes(wt, mpg)) + geom\_point() create identical ggplot objects, but later
-feels more descriptive of the resultant plot. Between these two options,
-the preference for the geom\_ is evident in the data; on Github, there
-are 788 R language files containing ‘stat\_identity’ whereas a
-staggering 261-thousand R language files contain ‘geom\_point’. stat\_\*
-constructions are more flexible, so of course, the topic is covered.
+Regarding focus on stat\_‘s vs. geom\_’s functions, I take a geom\_\*
+-first approach, because they are more commonly used. I suspect we find
+geom\_\* function names to be more concrete descriptions of what the
+creator envisions for her plot, whereas stat\_\* function names may feel
+a be more ’adverbial’ and nebulous in their description of rendered
+output. Consider that ggplot(mtcars, aes(wt, mpg)) + stat\_identity()
+and ggplot(mtcars, aes(wt, mpg)) + geom\_point() create identical plots,
+but later feels much more descriptive of the resultant plot. Between
+these two options, the preference for the geom\_ is evident in the user
+data; on Github, there are 788 R language files containing
+‘stat\_identity’ whereas a staggering 261-thousand R language files
+contain ‘geom\_point’. Of course, stat\_\* constructions are more
+flexible and important and the topic is covered later on.
 
 Finally, most of the code is at the ‘R for Data Science’ level, and not
 ‘Advanced R’ level, which hopefully will afford greater reach. While
@@ -230,28 +242,29 @@ break in to it in my analyst role.
 
 I experienced about a year of failure and frustration when first
 entering the extension space. If I weren’t so convinced of the
-efficiency gains that it would eventually yield, I’d likely have given
-up. Recognizing the substantial hurdles for even long time R and ggplot2
-users, I think there is space for more ggplot2 extension reference
-materials, such as the recipes in the *ggplot2 Extension Cookbook*.
+efficiency gains that it would eventually yield and the elegance of
+extension, I’d likely have given up. Recognizing the substantial hurdles
+for even long time R and ggplot2 users, I think there is space for more
+ggplot2 extension reference materials, such as the recipes in the
+*ggplot2 Extension Cookbook*.
 
-I’m grateful for several expediences and the efforts of others that have
-refined these new materials. First, just after getting my own feet wet
-in extension, I had the chance to work on extension with students in the
-context of independent studies. Our focus was the same type of extension
-that Pederson demonstrated – a geom that used a Stat to do some
-computational work, and then inherited the rest of its behavior from a
-more primitive geom.
+I’m grateful for several experiences and the efforts of others that have
+refined these materials. First, just after getting my own feet wet in
+extension, I had the chance to work on extension with students in the
+context of their independent studies. Our focus was the same type of
+extension that Pederson demonstrated – a geom\_\* function that used a
+Stat to do some computational work, and then inherited the rest of its
+behavior from a more primitive geom.
 
-Working with first and second year undergrad students meant that I had
-to think about and formulate workflow - where reference material would
-even be accessibility to very new R users. As veterans of just one or
-two stats classes that used R and ggplot2, what would they find familiar
-and accessible? What might we be able to de-emphasize ggproto and OOP in
-R which they hadn’t covered and still succeed? Working with students, I
-had a wonderful chance to refine extension workflow futher.
+Working with first and second year undergrad students meant that I got
+to think about and formulate workflow; how would we build up skills and
+ideas in way that would be accessibility to rather new R and ggplot2
+users. As veterans of just one or two stats classes that used R and
+ggplot2, what would they find familiar and accessible? What might we be
+able to de-emphasize? ggproto and OOP in R hadn’t been touched in
+coursework. Could we still still succeed with extension?
 
-The following steps emerged and persisted into our tutorial formula:
+The following steps emerged:
 
   - Step 0: get job done with ‘base’ ggplot2
   - Step 1: Write a function for the ‘compute’
@@ -259,15 +272,15 @@ The following steps emerged and persisted into our tutorial formula:
   - Step 3: Pass ggproto to stat/geom/facet function
   - Step 4: Try out/test/enjoy\!
 
-Taking on new R users to try to do something only just felt like I was
-wrapping my head around was a leap of faith. I was very impressed with
-what the students were able to accomplish during a single semester, and
-breathed a sign of relief.
+Taking new R users into the extension space was a leap of faith. But I
+was very impressed with what the students were able to accomplish during
+a single semester.
 
-I wondered how the strategy would perform with experienced R and ggplot2
-users. Being an academic, I wanted to assess further and I went down the
-route of devising a tutorial \[with assistance from independent study
-student Morgan Brown\] and formally getting feedback on it via focus
+And I also wondered how the strategy would perform with experienced R
+and ggplot2 users. Being an academic, I wanted to assess further and I
+went down the route of devising a tutorial \[with assistance from
+independent study student Morgan Brown, who continued to work with me
+for a second semester\] and formally getting feedback on it via focus
 groups and a survey, after refining the tutorial.
 
 I did some research on ggplot2 extension among ggplot2 and R ‘super
@@ -286,33 +299,38 @@ validated the efforts but also challenged me:
 > know, like, my problem isn’t gonna be that easy.
 
 To that participant, I’d say ‘Sometimes it *is* that easy’. But he is
-right, that often times I come to an extension problem and am suprised
+right, that often times I come to an extension problem and am surprised
 that the strategy that I think is going to work doesn’t, or at least not
 without a little fiddling.
 
 The [feedback on the
 easy-geom-recipes](https://github.com/EvaMaeRey/easy-geom-recipes) was
-collected in March 2023.
+collected in March 2023. I presented on the outcomes at the ASA Chapter
+meeting of COWY, [‘A New Wave of ggplot2
+Extenders’](https://evamaerey.github.io/mytidytuesday/2023-09-26-cowy-outline/cowy-slides.html#1).
 
 To try to make those experiences valuable to others, I follow the
 ‘recipe’ formula as much as possible so that as strategies morph, one
 still recognizes ‘where we are’ at a high-level in the process.
 
-Now to serve the community and for use in this *ggplot2 Extension
-Cookbook*, I’m using an in-README documentation strategy for my ggplot2
-extension packages so that the development stories are in one place
-instead of scattered between package files.
-
-So, I’m interested in simply developing new, useful extensions.
-
-This is made possible via the readme2pkg R package and in turn the knitr
-package written by Yihui Xie, whose tools (literate programming,
-xaringan and other tools) had already played a huge role in my
-relationship with ggplot2. Before arriving at this solution, I felt that
-I’d need to divide my energy between moving forward in my own extension
-development journey and educator. I’m grateful that with the magic of
-knitr::knitr\_code$get() I allow code to sit in the README narrative and
-also send it to the required .R directory to serve in the package.
+After presenting on the success of ‘easy geom recipes’, I felt I was at
+a crossroads. I could either focus on packaging my material as
+educational, or I could actually write extensions in R packages. The
+later felt a little more true to my interests But, I ended up landing a
+solution where I could have it *both ways*: writing packages that
+preserve the story and create recipes along the way. This was enabled by
+a literate programming mindset and specifically thinly wrapping
+knitr::knitr\_code$get() in my own package {readme2pkg}; the functions
+send code chunks to the appropriate directories for packaging, but live
+in the README.Rmd as part of the development narrative. In creating this
+*ggplot2 extension cookbook*, I’m returning to the educator focus. It
+has been very easy to pull in material from those packages given their
+adherence a specific narrative form. In mocking up this book, I’m using
+code chunk options like `child =
+'../my_gg_experiments/my_extension_ideas.'` and `code =
+'../ggwaterfall/R/geom_waterfall'.` It is a great help not to have to
+pull up files and copy and paste. I’m very grateful to Yihui Xie for his
+insights and efforts at making this possible.
 
 At present, I’ll just show examples of functionality, and then link to
 the READMEs for further investigation of the specific recipes/strategies
@@ -352,7 +370,7 @@ Having completed these exercises, you’ll have lived geom creations from
 start to finish, will be well oriented to the consistent patterns I use,
 to the extent possible, throughout the cookbook.
 
-![](man/figures/unnamed-chunk-4-1.png)<!-- -->
+![](man/figures/unnamed-chunk-5-1.png)<!-- -->
 
 # easy geom\_\* functions: writing new definitions for where and how of marks on ggplots
 
@@ -391,7 +409,7 @@ cars |>
             vjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-7-1.png)<!-- -->
+![](man/figures/unnamed-chunk-8-1.png)<!-- -->
 
 Step 0.b But we might like the concise syntax…
 
@@ -457,7 +475,7 @@ ggplot(data = cars) +
     )
 ```
 
-![](man/figures/unnamed-chunk-11-1.png)<!-- -->
+![](man/figures/unnamed-chunk-12-1.png)<!-- -->
 
 For convenience, the layer() function is usually wrapped to have a fixed
 stat or fixed geom. In geom\_text\_coordinate, because the use-scope is
@@ -501,7 +519,7 @@ ggplot(data = cars) +
   geom_text_coordinate() 
 ```
 
-![](man/figures/unnamed-chunk-13-1.png)<!-- -->
+![](man/figures/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 
@@ -509,9 +527,9 @@ last_plot() +
   aes(color = speed > 15)
 ```
 
-![](man/figures/unnamed-chunk-13-2.png)<!-- -->
+![](man/figures/unnamed-chunk-14-2.png)<!-- -->
 
-## geom\_post: **1:1:1**
+## geom\_post: **1:1:1** 🚧 *this is a nice example. Add\!*
 
 ## geom\_xy\_means: **n:1:1**
 
@@ -533,14 +551,14 @@ ggplot(mtcars) +
              size = 8)
 ```
 
-![](man/figures/unnamed-chunk-15-1.png)<!-- -->
+![](man/figures/unnamed-chunk-16-1.png)<!-- -->
 
 ### Step 1. Write compute function
 
 ``` r
 compute_group_means <- function(data, scales){
   
-  data %>% 
+  data |>
     summarise(x = mean(x),
               y = mean(y))
   
@@ -590,7 +608,7 @@ ggplot(mtcars) +
   geom_xy_means(size = 8)
 ```
 
-![](man/figures/unnamed-chunk-19-1.png)<!-- -->
+![](man/figures/unnamed-chunk-20-1.png)<!-- -->
 
 ``` r
 
@@ -598,7 +616,7 @@ last_plot() +
   aes(color = am == 1)
 ```
 
-![](man/figures/unnamed-chunk-19-2.png)<!-- -->
+![](man/figures/unnamed-chunk-20-2.png)<!-- -->
 
 ## geom\_chull: **N:1:n**
 
@@ -631,7 +649,7 @@ ggplot(mtcars) +
                color = "black")
 ```
 
-![](man/figures/unnamed-chunk-20-1.png)<!-- -->
+![](man/figures/unnamed-chunk-21-1.png)<!-- -->
 
 ### Step 1. Compute
 
@@ -647,7 +665,7 @@ compute_group_c_hull <- function(data, scales){
 ```
 
 Below, we see that the dataset is reduced to 11 rows which constitute
-the convex hull perimiter.
+the convex hull perimeter.
 
 ``` r
 mtcars %>% # 32 rows
@@ -709,7 +727,7 @@ ggplot(data = mtcars) +
   geom_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-25-1.png)<!-- -->
+![](man/figures/unnamed-chunk-26-1.png)<!-- -->
 
 ``` r
 
@@ -718,7 +736,7 @@ last_plot() +
       fill = factor(am))
 ```
 
-![](man/figures/unnamed-chunk-25-2.png)<!-- -->
+![](man/figures/unnamed-chunk-26-2.png)<!-- -->
 
 -----
 
@@ -727,7 +745,7 @@ last_plot() +
 *a many-row geom for each row of the input data frame, with
 interdependence between input observations.*
 
-### Step 0.
+### Step 0. 🚧 *Add how-to w/ base ggplot2*
 
 ### Step 1. Compute
 
@@ -799,7 +817,7 @@ gapminder::gapminder %>%
 #> Joining with `by = join_by(id)`
 ```
 
-![](man/figures/unnamed-chunk-29-1.png)<!-- -->
+![](man/figures/unnamed-chunk-30-1.png)<!-- -->
 
 ``` r
 
@@ -808,9 +826,9 @@ last_plot() +
 #> Joining with `by = join_by(id)`
 ```
 
-![](man/figures/unnamed-chunk-29-2.png)<!-- -->
+![](man/figures/unnamed-chunk-30-2.png)<!-- -->
 
-## geom\_circle: **1:1:n**,
+## geom\_circle: **1:1:n**, 🚧 *clarify the reason compute\_panel is needed*
 
 *a single row in a dataframe: will be visualized by a single mark : the
 mark will be defined by many-row in an internal dataframe*
@@ -838,7 +856,7 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-56-1.png)<!-- -->
+![](man/figures/unnamed-chunk-59-1.png)<!-- -->
 
 ### Step 1. Compute
 
@@ -920,7 +938,7 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-60-1.png)<!-- -->
+![](man/figures/unnamed-chunk-63-1.png)<!-- -->
 
 ``` r
 
@@ -934,7 +952,7 @@ diamonds %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-60-2.png)<!-- -->
+![](man/figures/unnamed-chunk-63-2.png)<!-- -->
 
 ``` r
 
@@ -945,7 +963,7 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-60-3.png)<!-- -->
+![](man/figures/unnamed-chunk-63-3.png)<!-- -->
 
 ``` r
   
@@ -958,7 +976,7 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-60-4.png)<!-- -->
+![](man/figures/unnamed-chunk-63-4.png)<!-- -->
 
 ``` r
 
@@ -972,7 +990,7 @@ last_plot() +
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-60-5.png)<!-- -->
+![](man/figures/unnamed-chunk-63-5.png)<!-- -->
 
 ### Why not compute\_group?
 
@@ -1020,7 +1038,7 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-61-1.png)<!-- -->
+![](man/figures/unnamed-chunk-64-1.png)<!-- -->
 
 ## geom\_state: **1:1:n**
 
@@ -1042,22 +1060,22 @@ states_characteristics %>%
 #> Joining with `by = join_by(state_name)`
 ```
 
-![](man/figures/unnamed-chunk-31-1.png)<!-- -->
+![](man/figures/unnamed-chunk-32-1.png)<!-- -->
 
-### Step 1: Write compute function
+### Step 1: Write compute function 🚧
 
 ``` r
 code = readlines_wo_roxygen(x = "../ggstates/R/geom_state.R")
 ```
 
-### Step 3. Pass to user-facing function..
+### Step 3. Pass to user-facing function.. 🚧
 
-### Step 4. Use/Test/Enjoy
+### Step 4. Use/Test/Enjoy 🚧
 
 ``` r
 ggplot(data = states_characteristics) + 
   aes(state_name = state.name) +
-  geom_state()
+  ggstates::geom_state()
 ```
 
 ## geom\_ols: **n:k:w; interdependence**
@@ -1068,11 +1086,13 @@ ggplot(data = states_characteristics) +
 
 *a geom defined by an sf geometry column*
 
-### Step 1, 2, 3. compute
+### Step 0 🚧 *add example*
 
 ``` r
 library(ggnorthcarolina)
 ```
+
+### Step 1, 2, 3. compute 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function; more to figure out with CRSs*
 
 ``` r
 ################# Step 1. Compute panel function ###########
@@ -1149,6 +1169,8 @@ geom_county <- function(
   }
 ```
 
+### Step 4. Use/test/enjoy
+
 ``` r
 ggnorthcarolina::northcarolina_county_flat %>% 
   ggplot() + 
@@ -1157,7 +1179,7 @@ ggnorthcarolina::northcarolina_county_flat %>%
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-37-1.png)<!-- -->
+![](man/figures/unnamed-chunk-38-1.png)<!-- -->
 
 ``` r
 
@@ -1166,7 +1188,7 @@ last_plot() +
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-37-2.png)<!-- -->
+![](man/figures/unnamed-chunk-38-2.png)<!-- -->
 
 ### Step 2.
 
@@ -1234,7 +1256,7 @@ stat_chull <- function(mapping = NULL,
 The construction is almost identical. However, in the stat version, the
 geom is flexible because it can be user defined, instead of being
 hard-coded in the function. Its use allows you to go in different visual
-directions, but might have a higher cognative load.
+directions, but might have a higher cognitive load.
 
 ``` r
 p <- ggplot(data = mtcars) + 
@@ -1245,7 +1267,7 @@ p +
   stat_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-41-1.png)<!-- -->
+![](man/figures/unnamed-chunk-42-1.png)<!-- -->
 
 ``` r
 
@@ -1255,7 +1277,7 @@ p +
              size = 4)
 ```
 
-![](man/figures/unnamed-chunk-41-2.png)<!-- -->
+![](man/figures/unnamed-chunk-42-2.png)<!-- -->
 
 ``` r
 
@@ -1265,7 +1287,7 @@ p +
              hjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-41-3.png)<!-- -->
+![](man/figures/unnamed-chunk-42-3.png)<!-- -->
 
 ``` r
 
@@ -1278,7 +1300,7 @@ p +
 #> Ignoring unknown parameters: `label` and `hjust`
 ```
 
-![](man/figures/unnamed-chunk-41-4.png)<!-- -->
+![](man/figures/unnamed-chunk-42-4.png)<!-- -->
 
 ## stat\_waterfall: **1:1:1; interdependence**
 
@@ -1336,7 +1358,7 @@ flow_df |>
   scale_fill_manual(values = c("springgreen4", "darkred"))
 ```
 
-![](man/figures/unnamed-chunk-42-1.png)<!-- -->
+![](man/figures/unnamed-chunk-43-1.png)<!-- -->
 
 The strategy to create geom waterfall follows the standard four steps.
 
@@ -1454,7 +1476,7 @@ last_plot() +
   aes(x = fct_reorder(event, abs(change)))
 ```
 
-<img src="man/figures/unnamed-chunk-45-1.png" width="33%" /><img src="man/figures/unnamed-chunk-45-2.png" width="33%" /><img src="man/figures/unnamed-chunk-45-3.png" width="33%" />
+<img src="man/figures/unnamed-chunk-46-1.png" width="33%" /><img src="man/figures/unnamed-chunk-46-2.png" width="33%" /><img src="man/figures/unnamed-chunk-46-3.png" width="33%" />
 
 The final plot shows that while there are some convenience defaults for
 label and fill, these can be over-ridden.
@@ -1465,19 +1487,65 @@ last_plot() +
   aes(fill = NULL)
 ```
 
-![](man/figures/unnamed-chunk-46-1.png)<!-- -->
+![](man/figures/unnamed-chunk-47-1.png)<!-- -->
 
 # borrowing compute
-
-geom\_smoothfit: **1:1:1** highjacking (?) an existing stats’s
-computational powers
 
 ## geom\_smoothfit: **1:1:1** ggproto piggybacking on compute…
 
 n:1:80 is geom\_smooth default.
 
 ``` r
-library(ggsmoothfit)
+ggplot(data = mtcars) + 
+  aes(x = wt, y = mpg) + 
+  geom_point() + 
+  geom_smooth() +
+  stat_smooth(xseq = mtcars$wt, 
+              geom = "point",
+              color = "blue")
+#> `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+#> `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+```
+
+![](man/figures/unnamed-chunk-48-1.png)<!-- --> \#\#\# Step 1. compute
+
+``` r
+compute_group_smooth_fit <- function(data, scales, method = NULL, formula = NULL,
+                           se = TRUE, n = 80, span = 0.75, fullrange = FALSE,
+                           level = 0.95, method.args = list(),
+                           na.rm = FALSE, flipped_aes = NA){
+  
+  
+  out <- ggplot2::StatSmooth$compute_group(data = data, scales = scales, 
+                       method = method, formula = formula, 
+                       se = FALSE, n= n, span = span, fullrange = fullrange,
+                       xseq = data$x, 
+                       level = .95, method.args = method.args, 
+                       na.rm = na.rm, flipped_aes = flipped_aes) 
+  
+
+  out$x_obs <-  data$x
+  out$y_obs <- data$y
+  
+  out$xend <- out$x_obs
+  out$yend <- out$y_obs
+  
+  out
+  
+}
+```
+
+### Step 2
+
+### Step 3
+
+``` r
+geom_smooth_predict <- function(xseq,  mapping = NULL, data = NULL, ..., method = NULL, formula = NULL, se = TRUE, method.args = list(), na.rm = FALSE, orientation = NA, show.legend = NA, inherit.aes = TRUE, color = "blue"){
+  
+  stat_smooth( mapping = mapping, data = data, geom = "point", position = "identity", xseq = xseq,  ..., method = method, formula = formula, se = se, method.args = list(), na.rm = na.rm, orientation = orientation, show.legend = show.legend, inherit.aes = inherit.aes, color = color
+)
+  
+}
 ```
 
 # add default aesthetics
