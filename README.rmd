@@ -673,28 +673,84 @@ for each row in the dataframe, a single geometry is visualized, but each geom is
 ### Step 0:  use base ggplot2
 
 ```{r}
+us_states <- ggplot2::map_data("state")
+
 tibble(state.name) %>% 
   mutate(ind_vowel_states = 
            str_detect(state.name, "A|E|I|O|U")) ->
 states_characteristics
 
 states_characteristics %>% 
-  rename(state_name = state.name) %>% 
-  left_join(ggstates::state_reference_full) %>% 
-  sf::st_as_sf() %>% 
+  left_join(us_states %>% mutate(state.name = stringr::str_to_title(region))) %>% 
   ggplot() + 
-  geom_sf() +
-  aes(fill = ind_vowel_states)
+  aes(x = long, y = lat, group = group) +
+  geom_polygon() +
+  aes(fill = ind_vowel_states) +
+  coord_map()
 ```
 
 ### Step 1:  Write compute function 🚧
 
 ```{r}
-code = readlines_wo_roxygen(x = "../ggstates/R/geom_state.R")
+ggplot2::map_data("state") %>% 
+  rename(state_name = region) %>% 
+  mutate(state_name = stringr::str_to_title(state_name)) %>% 
+  rename(x = long, y = lat) %>% 
+  select(-subregion) %>% 
+  rename(geometry_group = group) ->
+continental_states_geo_reference
+
+
+compute_panel_state <- function(data, scales){
+  
+  data %>% 
+    left_join(continental_states_geo_reference)
+  
+}
+```
+
+
+And let's test out this compute...
+
+```{r}
+states_characteristics %>% 
+  rename(state_name = state.name) %>% 
+  compute_panel_state()
+```
+
+### Step 2. Pass to ggproto
+
+```{r}
+StatUsstate <- ggplot2::ggproto(`_class` = "StatUsstate",
+                                  `_inherit` = ggplot2::Stat,
+                                  required_aes = c("state_name"),
+                                  compute_panel = compute_panel_state,
+                                default_aes = aes(group = after_stat(geometry_group)))
 
 ```
 
+
 ### Step 3. Pass to user-facing function..  🚧
+
+
+```{r}
+geom_state <- function(mapping = NULL, data = NULL,
+                           position = "identity", na.rm = FALSE,
+                           show.legend = NA,
+                           inherit.aes = TRUE, ...) {
+  ggplot2::layer(
+    stat = StatUsstate, # proto object from Step 2
+    geom = ggplot2::GeomPolygon, # inherit other behavior
+    data = data,
+    mapping = mapping,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+
+```
 
 
 ### Step 4. Use/Test/Enjoy  🚧
@@ -703,8 +759,9 @@ code = readlines_wo_roxygen(x = "../ggstates/R/geom_state.R")
 ```{r, eval = F}
 ggplot(data = states_characteristics) + 
   aes(state_name = state.name) +
-  ggstates::geom_state()
-
+  geom_state() + 
+  aes(fill = ind_vowel_states) + 
+  coord_map()
 ```
 
 

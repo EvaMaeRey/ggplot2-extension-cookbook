@@ -58,6 +58,7 @@
           - [Step 0: use base ggplot2](#step-0-use-base-ggplot2-2)
           - [Step 1: Write compute function
             🚧](#step-1-write-compute-function-)
+          - [Step 2. Pass to ggproto](#step-2-pass-to-ggproto-2)
           - [Step 3. Pass to user-facing function..
             🚧](#step-3-pass-to-user-facing-function-)
           - [Step 4. Use/Test/Enjoy 🚧](#step-4-usetestenjoy-)
@@ -857,7 +858,7 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-59-1.png)<!-- -->
+![](man/figures/unnamed-chunk-62-1.png)<!-- -->
 
 ### Step 1. Compute
 
@@ -939,7 +940,7 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-63-1.png)<!-- -->
+![](man/figures/unnamed-chunk-66-1.png)<!-- -->
 
 ``` r
 
@@ -953,7 +954,7 @@ diamonds %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-63-2.png)<!-- -->
+![](man/figures/unnamed-chunk-66-2.png)<!-- -->
 
 ``` r
 
@@ -964,7 +965,7 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-63-3.png)<!-- -->
+![](man/figures/unnamed-chunk-66-3.png)<!-- -->
 
 ``` r
   
@@ -977,7 +978,7 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-63-4.png)<!-- -->
+![](man/figures/unnamed-chunk-66-4.png)<!-- -->
 
 ``` r
 
@@ -991,7 +992,7 @@ last_plot() +
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-63-5.png)<!-- -->
+![](man/figures/unnamed-chunk-66-5.png)<!-- -->
 
 ### Why not compute\_group?
 
@@ -1039,26 +1040,32 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-64-1.png)<!-- -->
+![](man/figures/unnamed-chunk-67-1.png)<!-- -->
 
 ## geom\_state: **1:1:n**
 
 ### Step 0: use base ggplot2
 
 ``` r
+us_states <- ggplot2::map_data("state")
+
 tibble(state.name) %>% 
   mutate(ind_vowel_states = 
            str_detect(state.name, "A|E|I|O|U")) ->
 states_characteristics
 
 states_characteristics %>% 
-  rename(state_name = state.name) %>% 
-  left_join(ggstates::state_reference_full) %>% 
-  sf::st_as_sf() %>% 
+  left_join(us_states %>% mutate(state.name = stringr::str_to_title(region))) %>% 
   ggplot() + 
-  geom_sf() +
-  aes(fill = ind_vowel_states)
-#> Joining with `by = join_by(state_name)`
+  aes(x = long, y = lat, group = group) +
+  geom_polygon() +
+  aes(fill = ind_vowel_states) +
+  coord_map()
+#> Joining with `by = join_by(state.name)`
+#> Warning in left_join(., us_states %>% mutate(state.name = stringr::str_to_title(region))): Each row in `x` is expected to match at most 1 row in `y`.
+#> ℹ Row 1 of `x` matches multiple rows.
+#> ℹ If multiple matches are expected, set `multiple = "all"` to silence this
+#>   warning.
 ```
 
 ![](man/figures/unnamed-chunk-32-1.png)<!-- -->
@@ -1066,17 +1073,88 @@ states_characteristics %>%
 ### Step 1: Write compute function 🚧
 
 ``` r
-code = readlines_wo_roxygen(x = "../ggstates/R/geom_state.R")
+ggplot2::map_data("state") %>% 
+  rename(state_name = region) %>% 
+  mutate(state_name = stringr::str_to_title(state_name)) %>% 
+  rename(x = long, y = lat) %>% 
+  select(-subregion) %>% 
+  rename(geometry_group = group) ->
+continental_states_geo_reference
+
+
+compute_panel_state <- function(data, scales){
+  
+  data %>% 
+    left_join(continental_states_geo_reference)
+  
+}
+```
+
+And let’s test out this compute…
+
+``` r
+states_characteristics %>% 
+  rename(state_name = state.name) %>% 
+  compute_panel_state()
+#> Joining with `by = join_by(state_name)`
+#> Warning in left_join(., continental_states_geo_reference): Each row in `x` is expected to match at most 1 row in `y`.
+#> ℹ Row 1 of `x` matches multiple rows.
+#> ℹ If multiple matches are expected, set `multiple = "all"` to silence this
+#>   warning.
+#> # A tibble: 15,529 × 6
+#>    state_name ind_vowel_states     x     y geometry_group order
+#>    <chr>      <lgl>            <dbl> <dbl>          <dbl> <int>
+#>  1 Alabama    TRUE             -87.5  30.4              1     1
+#>  2 Alabama    TRUE             -87.5  30.4              1     2
+#>  3 Alabama    TRUE             -87.5  30.4              1     3
+#>  4 Alabama    TRUE             -87.5  30.3              1     4
+#>  5 Alabama    TRUE             -87.6  30.3              1     5
+#>  6 Alabama    TRUE             -87.6  30.3              1     6
+#>  7 Alabama    TRUE             -87.6  30.3              1     7
+#>  8 Alabama    TRUE             -87.6  30.3              1     8
+#>  9 Alabama    TRUE             -87.7  30.3              1     9
+#> 10 Alabama    TRUE             -87.8  30.3              1    10
+#> # ℹ 15,519 more rows
+```
+
+### Step 2. Pass to ggproto
+
+``` r
+StatUsstate <- ggplot2::ggproto(`_class` = "StatUsstate",
+                                  `_inherit` = ggplot2::Stat,
+                                  required_aes = c("state_name"),
+                                  compute_panel = compute_panel_state,
+                                default_aes = aes(group = after_stat(geometry_group)))
 ```
 
 ### Step 3. Pass to user-facing function.. 🚧
+
+``` r
+geom_state <- function(mapping = NULL, data = NULL,
+                           position = "identity", na.rm = FALSE,
+                           show.legend = NA,
+                           inherit.aes = TRUE, ...) {
+  ggplot2::layer(
+    stat = StatUsstate, # proto object from Step 2
+    geom = ggplot2::GeomPolygon, # inherit other behavior
+    data = data,
+    mapping = mapping,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+```
 
 ### Step 4. Use/Test/Enjoy 🚧
 
 ``` r
 ggplot(data = states_characteristics) + 
   aes(state_name = state.name) +
-  ggstates::geom_state()
+  geom_state() + 
+  aes(fill = ind_vowel_states) + 
+  coord_map()
 ```
 
 ## geom\_ols: **n:k:w; interdependence**
@@ -1180,7 +1258,7 @@ ggnorthcarolina::northcarolina_county_flat %>%
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-38-1.png)<!-- -->
+![](man/figures/unnamed-chunk-41-1.png)<!-- -->
 
 ``` r
 
@@ -1189,7 +1267,7 @@ last_plot() +
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-38-2.png)<!-- -->
+![](man/figures/unnamed-chunk-41-2.png)<!-- -->
 
 ### Step 2.
 
@@ -1268,7 +1346,7 @@ p +
   stat_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-42-1.png)<!-- -->
+![](man/figures/unnamed-chunk-45-1.png)<!-- -->
 
 ``` r
 
@@ -1278,7 +1356,7 @@ p +
              size = 4)
 ```
 
-![](man/figures/unnamed-chunk-42-2.png)<!-- -->
+![](man/figures/unnamed-chunk-45-2.png)<!-- -->
 
 ``` r
 
@@ -1288,7 +1366,7 @@ p +
              hjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-42-3.png)<!-- -->
+![](man/figures/unnamed-chunk-45-3.png)<!-- -->
 
 ``` r
 
@@ -1301,7 +1379,7 @@ p +
 #> Ignoring unknown parameters: `label` and `hjust`
 ```
 
-![](man/figures/unnamed-chunk-42-4.png)<!-- -->
+![](man/figures/unnamed-chunk-45-4.png)<!-- -->
 
 ## stat\_waterfall: **1:1:1; interdependence**
 
@@ -1359,7 +1437,7 @@ flow_df |>
   scale_fill_manual(values = c("springgreen4", "darkred"))
 ```
 
-![](man/figures/unnamed-chunk-43-1.png)<!-- -->
+![](man/figures/unnamed-chunk-46-1.png)<!-- -->
 
 The strategy to create geom waterfall follows the standard four steps.
 
@@ -1477,7 +1555,7 @@ last_plot() +
   aes(x = fct_reorder(event, abs(change)))
 ```
 
-<img src="man/figures/unnamed-chunk-46-1.png" width="33%" /><img src="man/figures/unnamed-chunk-46-2.png" width="33%" /><img src="man/figures/unnamed-chunk-46-3.png" width="33%" />
+<img src="man/figures/unnamed-chunk-49-1.png" width="33%" /><img src="man/figures/unnamed-chunk-49-2.png" width="33%" /><img src="man/figures/unnamed-chunk-49-3.png" width="33%" />
 
 The final plot shows that while there are some convenience defaults for
 label and fill, these can be over-ridden.
@@ -1488,7 +1566,7 @@ last_plot() +
   aes(fill = NULL)
 ```
 
-![](man/figures/unnamed-chunk-47-1.png)<!-- -->
+![](man/figures/unnamed-chunk-50-1.png)<!-- -->
 
 # borrowing compute
 
@@ -1508,7 +1586,7 @@ ggplot(data = mtcars) +
 #> `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 ```
 
-![](man/figures/unnamed-chunk-48-1.png)<!-- --> \#\#\# Step 1. compute
+![](man/figures/unnamed-chunk-51-1.png)<!-- --> \#\#\# Step 1. compute
 
 ``` r
 compute_group_smooth_fit <- function(data, scales, method = NULL, formula = NULL,
