@@ -806,7 +806,7 @@ nc_geo_reference |>
 ```
 
 
-### Step 1. compute 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function; more to figure out with CRSs*
+### Step 1. compute 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function*
 
 #### Prestep. Prepare reference sf dataframe
 
@@ -831,10 +831,10 @@ northcarolina_county_reference <-
                   purrr::map(geometry, 
                              return_st_bbox_df)) |>
   tidyr::unnest(bb) |>
-  tibble::tibble()
+  data.frame()
 
 head(northcarolina_county_reference)
-
+str(northcarolina_county_reference)
 
 sf::st_read(system.file("shape/nc.shp", package="sf")) |>
   rename(county_name = NAME, fips = FIPS) |>
@@ -842,6 +842,8 @@ sf::st_read(system.file("shape/nc.shp", package="sf")) |>
 northcarolina_county_reference
 
 head(northcarolina_county_reference)
+str(northcarolina_county_reference)
+
 ```
 
 #### Compute Step using reference data
@@ -871,7 +873,7 @@ StatNcfips <- ggplot2::ggproto(`_class` = "StatNcfips",
 
 
 
-### Step 3. pass to user facing function (wrapping ggplot::layer_sf() instead of ggplot2::layer())
+### Step 3. pass to user-facing function (wrapping ggplot::layer_sf() instead of ggplot2::layer())  🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function; more to figure out with CRSs*
 
 
 
@@ -908,10 +910,15 @@ geom_county <- function(
 ggnorthcarolina::northcarolina_county_flat |> 
   ggplot() + 
   aes(fips = fips) + 
-  geom_county() 
+  geom_county(crs = "NAD83") 
+
+p <- last_plot()
+p$coordinates$crs
 
 last_plot() + 
   aes(fill = SID74/BIR74)
+
+
 
 ```
 

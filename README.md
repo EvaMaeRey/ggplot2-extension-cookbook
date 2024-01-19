@@ -68,14 +68,15 @@
         sfc\_MULTIPOLYGON**](#geom_county-111-sfc_multipolygon)
           - [Step 0.](#step-0)
           - [Step 1. compute 🚧 *want to see if xmin, xmax columns can be
-            added within compute using ggplot2 function; more to figure
-            out with
-            CRSs*](#step-1-compute--want-to-see-if-xmin-xmax-columns-can-be-added-within-compute-using-ggplot2-function-more-to-figure-out-with-crss)
+            added within compute using ggplot2
+            function*](#step-1-compute--want-to-see-if-xmin-xmax-columns-can-be-added-within-compute-using-ggplot2-function)
           - [Step 2. pass to ggproto
             object](#step-2-pass-to-ggproto-object-2)
-          - [Step 3. pass to user facing function (wrapping
-            ggplot::layer\_sf() instead of
-            ggplot2::layer())](#step-3-pass-to-user-facing-function-wrapping-ggplotlayer_sf-instead-of-ggplot2layer)
+          - [Step 3. pass to user-facing function (wrapping
+            ggplot::layer\_sf() instead of ggplot2::layer()) 🚧 *want to
+            see if xmin, xmax columns can be added within compute using
+            ggplot2 function; more to figure out with
+            CRSs*](#step-3-pass-to-user-facing-function-wrapping-ggplotlayer_sf-instead-of-ggplot2layer--want-to-see-if-xmin-xmax-columns-can-be-added-within-compute-using-ggplot2-function-more-to-figure-out-with-crss)
           - [Step 4. Use/test/enjoy\!](#step-4-usetestenjoy-4)
       - [geom\_candlestick summarize first, then interdependence
         …](#geom_candlestick-summarize-first-then-interdependence-)
@@ -1042,7 +1043,6 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 #> Joining with `by = join_by(join_var)`
 #> Joining with `by = join_by(join_var)`
-#> Joining with `by = join_by(join_var)`
 ```
 
 ![](man/figures/unnamed-chunk-71-1.png)<!-- -->
@@ -1201,7 +1201,7 @@ nc_geo_reference |>
 
 ![](man/figures/unnamed-chunk-40-1.png)<!-- -->
 
-### Step 1. compute 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function; more to figure out with CRSs*
+### Step 1. compute 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function*
 
 #### Prestep. Prepare reference sf dataframe
 
@@ -1225,7 +1225,7 @@ northcarolina_county_reference <-
                   purrr::map(geometry, 
                              return_st_bbox_df)) |>
   tidyr::unnest(bb) |>
-  tibble::tibble()
+  data.frame()
 #> Reading layer `nc' from data source 
 #>   `/Library/Frameworks/R.framework/Versions/4.2/Resources/library/sf/shape/nc.shp' 
 #>   using driver `ESRI Shapefile'
@@ -1236,16 +1236,32 @@ northcarolina_county_reference <-
 #> Geodetic CRS:  NAD27
 
 head(northcarolina_county_reference)
-#> # A tibble: 6 × 7
-#>   county_name fips                              geometry  xmin  xmax  ymin  ymax
-#>   <chr>       <chr>                   <MULTIPOLYGON [°]> <dbl> <dbl> <dbl> <dbl>
-#> 1 Ashe        37009 (((-81.47276 36.23436, -81.54084 36… -81.7  36.2 -81.2  36.6
-#> 2 Alleghany   37005 (((-81.23989 36.36536, -81.24069 36… -81.3  36.4 -80.9  36.6
-#> 3 Surry       37171 (((-80.45634 36.24256, -80.47639 36… -81.0  36.2 -80.4  36.6
-#> 4 Currituck   37053 (((-76.00897 36.3196, -76.01735 36.… -76.3  36.1 -75.8  36.6
-#> 5 Northampton 37131 (((-77.21767 36.24098, -77.23461 36… -77.9  36.2 -77.1  36.6
-#> 6 Hertford    37091 (((-76.74506 36.23392, -76.98069 36… -77.2  36.2 -76.7  36.6
-
+#>   county_name  fips                       geometry      xmin     xmax      ymin
+#> 1        Ashe 37009 MULTIPOLYGON (((-81.47276 3... -81.74107 36.23436 -81.23989
+#> 2   Alleghany 37005 MULTIPOLYGON (((-81.23989 3... -81.34754 36.36536 -80.90344
+#> 3       Surry 37171 MULTIPOLYGON (((-80.45634 3... -80.96577 36.23388 -80.43531
+#> 4   Currituck 37053 MULTIPOLYGON (((-76.00897 3... -76.33025 36.07282 -75.77316
+#> 5 Northampton 37131 MULTIPOLYGON (((-77.21767 3... -77.90121 36.16277 -77.07531
+#> 6    Hertford 37091 MULTIPOLYGON (((-76.74506 3... -77.21767 36.23024 -76.70750
+#>       ymax
+#> 1 36.58965
+#> 2 36.57286
+#> 3 36.56521
+#> 4 36.55716
+#> 5 36.55629
+#> 6 36.55629
+str(northcarolina_county_reference)
+#> 'data.frame':    100 obs. of  7 variables:
+#>  $ county_name: chr  "Ashe" "Alleghany" "Surry" "Currituck" ...
+#>  $ fips       : chr  "37009" "37005" "37171" "37053" ...
+#>  $ geometry   :sfc_MULTIPOLYGON of length 100; first list element: List of 1
+#>   ..$ :List of 1
+#>   .. ..$ : num [1:27, 1:2] -81.5 -81.5 -81.6 -81.6 -81.7 ...
+#>   ..- attr(*, "class")= chr [1:3] "XY" "MULTIPOLYGON" "sfg"
+#>  $ xmin       : num  -81.7 -81.3 -81 -76.3 -77.9 ...
+#>  $ xmax       : num  36.2 36.4 36.2 36.1 36.2 ...
+#>  $ ymin       : num  -81.2 -80.9 -80.4 -75.8 -77.1 ...
+#>  $ ymax       : num  36.6 36.6 36.6 36.6 36.6 ...
 
 sf::st_read(system.file("shape/nc.shp", package="sf")) |>
   rename(county_name = NAME, fips = FIPS) |>
@@ -1275,6 +1291,18 @@ head(northcarolina_county_reference)
 #> 4 MULTIPOLYGON (((-76.00897 3...
 #> 5 MULTIPOLYGON (((-77.21767 3...
 #> 6 MULTIPOLYGON (((-76.74506 3...
+str(northcarolina_county_reference)
+#> 'data.frame':    100 obs. of  7 variables:
+#>  $ county_name: chr  "Ashe" "Alleghany" "Surry" "Currituck" ...
+#>  $ fips       : chr  "37009" "37005" "37171" "37053" ...
+#>  $ xmin       : num  -81.7 -81.3 -81 -76.3 -77.9 ...
+#>  $ ymin       : num  36.2 36.4 36.2 36.1 36.2 ...
+#>  $ xmax       : num  -81.2 -80.9 -80.4 -75.8 -77.1 ...
+#>  $ ymax       : num  36.6 36.6 36.6 36.6 36.6 ...
+#>  $ geometry   :sfc_MULTIPOLYGON of length 100; first list element: List of 1
+#>   ..$ :List of 1
+#>   .. ..$ : num [1:27, 1:2] -81.5 -81.5 -81.6 -81.6 -81.7 ...
+#>   ..- attr(*, "class")= chr [1:3] "XY" "MULTIPOLYGON" "sfg"
 ```
 
 #### Compute Step using reference data
@@ -1299,7 +1327,7 @@ StatNcfips <- ggplot2::ggproto(`_class` = "StatNcfips",
                                                     after_stat(geometry)))
 ```
 
-### Step 3. pass to user facing function (wrapping ggplot::layer\_sf() instead of ggplot2::layer())
+### Step 3. pass to user-facing function (wrapping ggplot::layer\_sf() instead of ggplot2::layer()) 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function; more to figure out with CRSs*
 
 ``` r
 geom_county <- function(
@@ -1334,13 +1362,17 @@ geom_county <- function(
 ggnorthcarolina::northcarolina_county_flat |> 
   ggplot() + 
   aes(fips = fips) + 
-  geom_county() 
+  geom_county(crs = "NAD83") 
 #> Joining with `by = join_by(fips)`
 ```
 
 ![](man/figures/unnamed-chunk-45-1.png)<!-- -->
 
 ``` r
+
+p <- last_plot()
+p$coordinates$crs
+#> [1] "NAD83"
 
 last_plot() + 
   aes(fill = SID74/BIR74)
