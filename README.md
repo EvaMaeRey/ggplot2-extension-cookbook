@@ -59,20 +59,24 @@
           - [Step 1: Write compute function
             🚧](#step-1-write-compute-function-)
           - [Step 2. Pass to ggproto](#step-2-pass-to-ggproto-2)
-          - [Step 3. Pass to user-facing function..
-            🚧](#step-3-pass-to-user-facing-function-)
-          - [Step 4. Use/Test/Enjoy 🚧](#step-4-usetestenjoy-)
+          - [Step 3. Pass to user-facing
+            function](#step-3-pass-to-user-facing-function-1)
+          - [Step 4. Use/Test/Enjoy](#step-4-usetestenjoy-3)
       - [geom\_ols: **n:k:w;
         interdependence**](#geom_ols-nkw-interdependence)
-      - [geom\_county: **1:1:1 via geometry
-        sf**](#geom_county-111-via-geometry-sf)
-          - [Step 0 🚧 *add example*](#step-0--add-example)
-          - [Step 1, 2, 3. compute 🚧 *want to see if xmin, xmax columns
-            can be added within compute using ggplot2 function; more to
-            figure out with
-            CRSs*](#step-1-2-3-compute--want-to-see-if-xmin-xmax-columns-can-be-added-within-compute-using-ggplot2-function-more-to-figure-out-with-crss)
-          - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-3)
-          - [Step 2.](#step-2)
+      - [geom\_county: **1:1:1
+        sfc\_MULTIPOLYGON**](#geom_county-111-sfc_multipolygon)
+          - [Step 0.](#step-0)
+          - [Step 1. compute 🚧 *want to see if xmin, xmax columns can be
+            added within compute using ggplot2 function; more to figure
+            out with
+            CRSs*](#step-1-compute--want-to-see-if-xmin-xmax-columns-can-be-added-within-compute-using-ggplot2-function-more-to-figure-out-with-crss)
+          - [Step 2. pass to ggproto
+            object](#step-2-pass-to-ggproto-object-2)
+          - [Step 3. pass to user facing function (wrapping
+            ggplot::layer\_sf() instead of
+            ggplot2::layer())](#step-3-pass-to-user-facing-function-wrapping-ggplotlayer_sf-instead-of-ggplot2layer)
+          - [Step 4. Use/test/enjoy\!](#step-4-usetestenjoy-4)
       - [geom\_candlestick summarize first, then interdependence
         …](#geom_candlestick-summarize-first-then-interdependence-)
       - [geom\_pie: **n -\> 1:1:1**](#geom_pie-n---111)
@@ -82,14 +86,14 @@
       - [stat\_chull](#stat_chull)
       - [stat\_waterfall: **1:1:1;
         interdependence**](#stat_waterfall-111-interdependence)
-          - [Step 0](#step-0)
+          - [Step 0](#step-0-1)
           - [Steps 1 and 2](#steps-1-and-2)
           - [Step 3](#step-3)
           - [Step 4](#step-4)
   - [borrowing compute](#borrowing-compute)
       - [geom\_smoothfit: **1:1:1** ggproto piggybacking on
         compute…](#geom_smoothfit-111-ggproto-piggybacking-on-compute)
-          - [Step 2](#step-2-1)
+          - [Step 2](#step-2)
           - [Step 3](#step-3-1)
   - [add default aesthetics](#add-default-aesthetics)
       - [geom\_barlab: Adding defaults to existing stats via ggproto
@@ -435,9 +439,9 @@ data |>
              paste0("(", data$x, ", ", data$y, ")"))
 }
 
-cars %>% 
-  rename(x = speed, y = dist) %>% 
-  compute_group_coordinates() %>% 
+cars |> 
+  rename(x = speed, y = dist) |> 
+  compute_group_coordinates() |> 
   head()
 #>   x  y   label
 #> 1 4  2  (4, 2)
@@ -641,7 +645,7 @@ library(tidyverse)
 chull_row_ids <- chull(mtcars$wt, mtcars$mpg)
 chull_row_ids
 #>  [1] 17 16 15 24  7 29 21  3 28 20 18
-mtcars_chull_subset <- mtcars %>% slice(chull_row_ids)
+mtcars_chull_subset <- mtcars |> slice(chull_row_ids)
 
 ggplot(mtcars) + 
   aes(x = wt, y = mpg) + 
@@ -661,7 +665,7 @@ compute_group_c_hull <- function(data, scales){
   
   chull_row_ids <- chull(data$x, data$y)
   
-  data %>% slice(chull_row_ids)
+  data |> slice(chull_row_ids)
   
 }
 ```
@@ -670,8 +674,8 @@ Below, we see that the dataset is reduced to 11 rows which constitute
 the convex hull perimeter.
 
 ``` r
-mtcars %>% # 32 rows
-  rename(x = wt, y = mpg) %>% 
+mtcars |> # 32 rows
+  rename(x = wt, y = mpg) |> 
   compute_group_c_hull() # 11 rows
 #>                        y cyl  disp  hp drat     x  qsec vs am gear carb
 #> Chrysler Imperial   14.7   8 440.0 230 3.23 5.345 17.42  0  0    3    4
@@ -755,24 +759,24 @@ interdependence between input observations.*
 # Step 1
 compute_panel_circlepack <- function(data, scales){
 
-  data %>%
+  data |>
     mutate(id = row_number()) ->
     data1
 
   if(is.null(data$area)){
 
-    data1 %>%
+    data1 |>
       mutate(area = 1) ->
       data1
 
   }
 
-  data1 %>%
-    pull(area) %>%
+  data1 |>
+    pull(area) |>
     packcircles::circleProgressiveLayout(
-      sizetype = 'area') %>%
-    packcircles::circleLayoutVertices(npoints = 50) %>%
-    left_join(data1) #%>%
+      sizetype = 'area') |>
+    packcircles::circleLayoutVertices(npoints = 50) |>
+    left_join(data1) #|>
 
 }
 ```
@@ -811,8 +815,8 @@ geom_circlepack <- function(mapping = NULL, data = NULL,
 ### Step 4. Use/test/enjoy
 
 ``` r
-gapminder::gapminder %>% 
-  filter(year == 2002) %>% 
+gapminder::gapminder |> 
+  filter(year == 2002) |> 
   ggplot() + 
   aes(id = country, fill = pop/1000000) + 
   geom_circlepack()
@@ -858,7 +862,7 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-62-1.png)<!-- -->
+![](man/figures/unnamed-chunk-66-1.png)<!-- -->
 
 ### Step 1. Compute
 
@@ -940,7 +944,7 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-66-1.png)<!-- -->
+![](man/figures/unnamed-chunk-70-1.png)<!-- -->
 
 ``` r
 
@@ -954,7 +958,7 @@ diamonds %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-66-2.png)<!-- -->
+![](man/figures/unnamed-chunk-70-2.png)<!-- -->
 
 ``` r
 
@@ -965,7 +969,7 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-66-3.png)<!-- -->
+![](man/figures/unnamed-chunk-70-3.png)<!-- -->
 
 ``` r
   
@@ -978,7 +982,7 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-66-4.png)<!-- -->
+![](man/figures/unnamed-chunk-70-4.png)<!-- -->
 
 ``` r
 
@@ -992,7 +996,7 @@ last_plot() +
 #> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-66-5.png)<!-- -->
+![](man/figures/unnamed-chunk-70-5.png)<!-- -->
 
 ### Why not compute\_group?
 
@@ -1038,9 +1042,10 @@ cars %>%
 #> Joining with `by = join_by(join_var)`
 #> Joining with `by = join_by(join_var)`
 #> Joining with `by = join_by(join_var)`
+#> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-67-1.png)<!-- -->
+![](man/figures/unnamed-chunk-71-1.png)<!-- -->
 
 ## geom\_state: **1:1:n**
 
@@ -1049,20 +1054,20 @@ cars %>%
 ``` r
 us_states <- ggplot2::map_data("state")
 
-tibble(state.name) %>% 
+tibble(state.name) |> 
   mutate(ind_vowel_states = 
            str_detect(state.name, "A|E|I|O|U")) ->
 states_characteristics
 
-states_characteristics %>% 
-  left_join(us_states %>% mutate(state.name = stringr::str_to_title(region))) %>% 
+states_characteristics |> 
+  left_join(us_states |> mutate(state.name = stringr::str_to_title(region))) |> 
   ggplot() + 
   aes(x = long, y = lat, group = group) +
   geom_polygon() +
   aes(fill = ind_vowel_states) +
   coord_map()
 #> Joining with `by = join_by(state.name)`
-#> Warning in left_join(., us_states %>% mutate(state.name = stringr::str_to_title(region))): Each row in `x` is expected to match at most 1 row in `y`.
+#> Warning in left_join(states_characteristics, mutate(us_states, state.name = stringr::str_to_title(region))): Each row in `x` is expected to match at most 1 row in `y`.
 #> ℹ Row 1 of `x` matches multiple rows.
 #> ℹ If multiple matches are expected, set `multiple = "all"` to silence this
 #>   warning.
@@ -1072,19 +1077,24 @@ states_characteristics %>%
 
 ### Step 1: Write compute function 🚧
 
+#### Prestep. Prepare reference dataset with state perimeters
+
 ``` r
-ggplot2::map_data("state") %>% 
-  rename(state_name = region) %>% 
-  mutate(state_name = stringr::str_to_title(state_name)) %>% 
-  rename(x = long, y = lat) %>% 
-  select(-subregion) %>% 
+ggplot2::map_data("state") |> 
+  rename(state_name = region) |> 
+  mutate(state_name = stringr::str_to_title(state_name)) |> 
+  rename(x = long, y = lat) |> 
+  select(-subregion) |> 
   rename(geometry_group = group) ->
 continental_states_geo_reference
+```
 
+#### Compute step. Join reference data onto input data
 
+``` r
 compute_panel_state <- function(data, scales){
   
-  data %>% 
+  data |> 
     left_join(continental_states_geo_reference)
   
 }
@@ -1093,11 +1103,11 @@ compute_panel_state <- function(data, scales){
 And let’s test out this compute…
 
 ``` r
-states_characteristics %>% 
-  rename(state_name = state.name) %>% 
+states_characteristics |> 
+  rename(state_name = state.name) |> 
   compute_panel_state()
 #> Joining with `by = join_by(state_name)`
-#> Warning in left_join(., continental_states_geo_reference): Each row in `x` is expected to match at most 1 row in `y`.
+#> Warning in left_join(data, continental_states_geo_reference): Each row in `x` is expected to match at most 1 row in `y`.
 #> ℹ Row 1 of `x` matches multiple rows.
 #> ℹ If multiple matches are expected, set `multiple = "all"` to silence this
 #>   warning.
@@ -1121,13 +1131,14 @@ states_characteristics %>%
 
 ``` r
 StatUsstate <- ggplot2::ggproto(`_class` = "StatUsstate",
-                                  `_inherit` = ggplot2::Stat,
-                                  required_aes = c("state_name"),
-                                  compute_panel = compute_panel_state,
-                                default_aes = aes(group = after_stat(geometry_group)))
+                                `_inherit` = ggplot2::Stat,
+                                required_aes = c("state_name"),
+                                compute_panel = compute_panel_state,
+                                default_aes = aes(group =
+                                                    after_stat(geometry_group)))
 ```
 
-### Step 3. Pass to user-facing function.. 🚧
+### Step 3. Pass to user-facing function
 
 ``` r
 geom_state <- function(mapping = NULL, data = NULL,
@@ -1147,7 +1158,7 @@ geom_state <- function(mapping = NULL, data = NULL,
 }
 ```
 
-### Step 4. Use/Test/Enjoy 🚧
+### Step 4. Use/Test/Enjoy
 
 ``` r
 ggplot(data = states_characteristics) + 
@@ -1161,67 +1172,136 @@ ggplot(data = states_characteristics) +
 
 *between-group computation*
 
-## geom\_county: **1:1:1 via geometry sf**
+## geom\_county: **1:1:1 sfc\_MULTIPOLYGON**
 
 *a geom defined by an sf geometry column*
 
-### Step 0 🚧 *add example*
+### Step 0.
 
 ``` r
-library(ggnorthcarolina)
+nc_geo_reference <- sf::st_read(system.file("shape/nc.shp", package="sf")) |> 
+  select(NAME, FIPS, FIPSNO, geometry)
+#> Reading layer `nc' from data source 
+#>   `/Library/Frameworks/R.framework/Versions/4.2/Resources/library/sf/shape/nc.shp' 
+#>   using driver `ESRI Shapefile'
+#> Simple feature collection with 100 features and 14 fields
+#> Geometry type: MULTIPOLYGON
+#> Dimension:     XY
+#> Bounding box:  xmin: -84.32385 ymin: 33.88199 xmax: -75.45698 ymax: 36.58965
+#> Geodetic CRS:  NAD27
+
+nc_geo_reference |> 
+  rename(fips = FIPS) |> 
+  full_join(ggnorthcarolina::northcarolina_county_flat) |> 
+  ggplot() + 
+  geom_sf() + 
+  aes(fill = BIR79)
+#> Joining with `by = join_by(fips, FIPSNO)`
 ```
 
-### Step 1, 2, 3. compute 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function; more to figure out with CRSs*
+![](man/figures/unnamed-chunk-40-1.png)<!-- -->
+
+### Step 1. compute 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function; more to figure out with CRSs*
+
+#### Prestep. Prepare reference sf dataframe
 
 ``` r
-################# Step 1. Compute panel function ###########
+#### 1, create sf reference dataframe w xmin, ymin, xmax and ymax using return_st_bbox_df function
+return_st_bbox_df <- function(sf_df){
 
-compute_county_northcarolina <- function(data, scales, keep_county = NULL){
-
-  reference_filtered <- northcarolina_county_reference
-  #
-  if(!is.null(keep_county)){
-
-    keep_county %>% tolower() -> keep_county
-
-    reference_filtered %>%
-      dplyr::filter(.data$county_name %>%
-                      tolower() %in%
-                      keep_county) ->
-      reference_filtered
-
-  }
-#
-#   # to prevent overjoining
-#   reference_filtered %>%
-#     dplyr::select("fips",  # id columns
-#                   "geometry",
-#                   "xmin","xmax",
-#                   "ymin", "ymax") ->
-#     reference_filtered
-
-
-  data %>%
-    dplyr::inner_join(reference_filtered) #%>% # , by = join_by(fips)
-    # dplyr::mutate(group = -1) %>%
-    # dplyr::select(-fips) #%>%
-    # sf::st_as_sf() %>%
-    # sf::st_transform(crs = 5070)
+  data.frame(xmin = sf::st_bbox(sf_df)[1],
+             xmax = sf::st_bbox(sf_df)[2],
+             ymin = sf::st_bbox(sf_df)[3],
+             ymax = sf::st_bbox(sf_df)[4])
 
 }
 
+northcarolina_county_reference <- 
+  sf::st_read(system.file("shape/nc.shp", package="sf")) |>
+  dplyr::rename(county_name = NAME,
+                fips = FIPS) |>
+  dplyr::select(county_name, fips, geometry) |>
+  dplyr::mutate(bb =
+                  purrr::map(geometry, 
+                             return_st_bbox_df)) |>
+  tidyr::unnest(bb) |>
+  tibble::tibble()
+#> Reading layer `nc' from data source 
+#>   `/Library/Frameworks/R.framework/Versions/4.2/Resources/library/sf/shape/nc.shp' 
+#>   using driver `ESRI Shapefile'
+#> Simple feature collection with 100 features and 14 fields
+#> Geometry type: MULTIPOLYGON
+#> Dimension:     XY
+#> Bounding box:  xmin: -84.32385 ymin: 33.88199 xmax: -75.45698 ymax: 36.58965
+#> Geodetic CRS:  NAD27
 
-###### Step 2. Specify ggproto ###############
+head(northcarolina_county_reference)
+#> # A tibble: 6 × 7
+#>   county_name fips                              geometry  xmin  xmax  ymin  ymax
+#>   <chr>       <chr>                   <MULTIPOLYGON [°]> <dbl> <dbl> <dbl> <dbl>
+#> 1 Ashe        37009 (((-81.47276 36.23436, -81.54084 36… -81.7  36.2 -81.2  36.6
+#> 2 Alleghany   37005 (((-81.23989 36.36536, -81.24069 36… -81.3  36.4 -80.9  36.6
+#> 3 Surry       37171 (((-80.45634 36.24256, -80.47639 36… -81.0  36.2 -80.4  36.6
+#> 4 Currituck   37053 (((-76.00897 36.3196, -76.01735 36.… -76.3  36.1 -75.8  36.6
+#> 5 Northampton 37131 (((-77.21767 36.24098, -77.23461 36… -77.9  36.2 -77.1  36.6
+#> 6 Hertford    37091 (((-76.74506 36.23392, -76.98069 36… -77.2  36.2 -76.7  36.6
 
-StatCountynorthcarolina <- ggplot2::ggproto(
-  `_class` = "StatCountynorthcarolina",
-  `_inherit` = ggplot2::Stat,
-  compute_panel = compute_county_northcarolina,
-  default_aes = ggplot2::aes(geometry = ggplot2::after_stat(geometry)))
 
+sf::st_read(system.file("shape/nc.shp", package="sf")) |>
+  rename(county_name = NAME, fips = FIPS) |>
+  ggnc::create_geometries_reference(id_cols = c(county_name, fips)) ->
+northcarolina_county_reference
+#> Reading layer `nc' from data source 
+#>   `/Library/Frameworks/R.framework/Versions/4.2/Resources/library/sf/shape/nc.shp' 
+#>   using driver `ESRI Shapefile'
+#> Simple feature collection with 100 features and 14 fields
+#> Geometry type: MULTIPOLYGON
+#> Dimension:     XY
+#> Bounding box:  xmin: -84.32385 ymin: 33.88199 xmax: -75.45698 ymax: 36.58965
+#> Geodetic CRS:  NAD27
 
-########### Step 3. geom function, inherits from sf ##################
+head(northcarolina_county_reference)
+#>   county_name  fips      xmin     ymin      xmax     ymax
+#> 1        Ashe 37009 -81.74107 36.23436 -81.23989 36.58965
+#> 2   Alleghany 37005 -81.34754 36.36536 -80.90344 36.57286
+#> 3       Surry 37171 -80.96577 36.23388 -80.43531 36.56521
+#> 4   Currituck 37053 -76.33025 36.07282 -75.77316 36.55716
+#> 5 Northampton 37131 -77.90121 36.16277 -77.07531 36.55629
+#> 6    Hertford 37091 -77.21767 36.23024 -76.70750 36.55629
+#>                         geometry
+#> 1 MULTIPOLYGON (((-81.47276 3...
+#> 2 MULTIPOLYGON (((-81.23989 3...
+#> 3 MULTIPOLYGON (((-80.45634 3...
+#> 4 MULTIPOLYGON (((-76.00897 3...
+#> 5 MULTIPOLYGON (((-77.21767 3...
+#> 6 MULTIPOLYGON (((-76.74506 3...
+```
 
+#### Compute Step using reference data
+
+``` r
+compute_panel_county <- function(data, scales){
+  
+  data |> 
+    dplyr::inner_join(northcarolina_county_reference)
+  
+}
+```
+
+### Step 2. pass to ggproto object
+
+``` r
+StatNcfips <- ggplot2::ggproto(`_class` = "StatNcfips",
+                                `_inherit` = ggplot2::Stat,
+                                required_aes = "fips|county_name",
+                                compute_panel = compute_panel_county,
+                                default_aes = aes(geometry =
+                                                    after_stat(geometry)))
+```
+
+### Step 3. pass to user facing function (wrapping ggplot::layer\_sf() instead of ggplot2::layer())
+
+``` r
 geom_county <- function(
       mapping = NULL,
       data = NULL,
@@ -1232,7 +1312,7 @@ geom_county <- function(
       crs = "NAD27", # "NAD27", 5070, "WGS84", "NAD83", 4326 , 3857
       ...) {
             c(ggplot2::layer_sf(
-              stat = StatCountynorthcarolina,  # proto object from step 2
+              stat = StatNcfips,  # proto object from step 2
               geom = ggplot2::GeomSf,  # inherit other behavior
               data = data,
               mapping = mapping,
@@ -1248,17 +1328,17 @@ geom_county <- function(
   }
 ```
 
-### Step 4. Use/test/enjoy
+### Step 4. Use/test/enjoy\!
 
 ``` r
-ggnorthcarolina::northcarolina_county_flat %>% 
+ggnorthcarolina::northcarolina_county_flat |> 
   ggplot() + 
   aes(fips = fips) + 
   geom_county() 
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-41-1.png)<!-- -->
+![](man/figures/unnamed-chunk-45-1.png)<!-- -->
 
 ``` r
 
@@ -1267,9 +1347,7 @@ last_plot() +
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-41-2.png)<!-- -->
-
-### Step 2.
+![](man/figures/unnamed-chunk-45-2.png)<!-- -->
 
 ## geom\_candlestick summarize first, then interdependence …
 
@@ -1346,7 +1424,7 @@ p +
   stat_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-45-1.png)<!-- -->
+![](man/figures/unnamed-chunk-49-1.png)<!-- -->
 
 ``` r
 
@@ -1356,7 +1434,7 @@ p +
              size = 4)
 ```
 
-![](man/figures/unnamed-chunk-45-2.png)<!-- -->
+![](man/figures/unnamed-chunk-49-2.png)<!-- -->
 
 ``` r
 
@@ -1366,7 +1444,7 @@ p +
              hjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-45-3.png)<!-- -->
+![](man/figures/unnamed-chunk-49-3.png)<!-- -->
 
 ``` r
 
@@ -1379,7 +1457,7 @@ p +
 #> Ignoring unknown parameters: `label` and `hjust`
 ```
 
-![](man/figures/unnamed-chunk-45-4.png)<!-- -->
+![](man/figures/unnamed-chunk-49-4.png)<!-- -->
 
 ## stat\_waterfall: **1:1:1; interdependence**
 
@@ -1437,7 +1515,7 @@ flow_df |>
   scale_fill_manual(values = c("springgreen4", "darkred"))
 ```
 
-![](man/figures/unnamed-chunk-46-1.png)<!-- -->
+![](man/figures/unnamed-chunk-50-1.png)<!-- -->
 
 The strategy to create geom waterfall follows the standard four steps.
 
@@ -1555,7 +1633,7 @@ last_plot() +
   aes(x = fct_reorder(event, abs(change)))
 ```
 
-<img src="man/figures/unnamed-chunk-49-1.png" width="33%" /><img src="man/figures/unnamed-chunk-49-2.png" width="33%" /><img src="man/figures/unnamed-chunk-49-3.png" width="33%" />
+<img src="man/figures/unnamed-chunk-53-1.png" width="33%" /><img src="man/figures/unnamed-chunk-53-2.png" width="33%" /><img src="man/figures/unnamed-chunk-53-3.png" width="33%" />
 
 The final plot shows that while there are some convenience defaults for
 label and fill, these can be over-ridden.
@@ -1566,7 +1644,7 @@ last_plot() +
   aes(fill = NULL)
 ```
 
-![](man/figures/unnamed-chunk-50-1.png)<!-- -->
+![](man/figures/unnamed-chunk-54-1.png)<!-- -->
 
 # borrowing compute
 
@@ -1586,7 +1664,7 @@ ggplot(data = mtcars) +
 #> `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 ```
 
-![](man/figures/unnamed-chunk-51-1.png)<!-- --> \#\#\# Step 1. compute
+![](man/figures/unnamed-chunk-55-1.png)<!-- --> \#\#\# Step 1. compute
 
 ``` r
 compute_group_smooth_fit <- function(data, scales, method = NULL, formula = NULL,
