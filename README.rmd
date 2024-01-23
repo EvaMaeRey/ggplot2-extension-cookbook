@@ -271,6 +271,8 @@ The section is called *easy* geoms because these geom functions actually inherit
 
 ### Step 0: use base ggplot2
 
+We'll always start with a 'step 0'.  The groundwork and knowledge that I assume you have is to build this plot without extending ggplot2. The computation that you do yourself will serve as useful reference for step 1 of the extension process.  Ultimately, we would like a ggplot2 function to do the compute in the background for us.
+
 ```{r}
 library(tidyverse)
 library(ggxmean)
@@ -291,15 +293,21 @@ cars |>
 
 ### Step 1: compute
 
+Compute functions will capture the compute that our a user-facing function will ultimately do for us in a plot build. Arguments that are required for ggplot2 to use the function in its preparation are both `data` and `scales`.  For now, we don't need worry more about the scales argument.  
+
+The data that serves as input can be assumed to contain columns with certain variable names --- the required aesthetics that we'll see declared in the next step. For the function that we're building, the required aesthetics will be 'x' and 'y'.  In the `compute_group_coordinates()` function, therefore, the mutate step is possible because the data will have variables named x and y.  In the mutate step, we are creating a variable that ggplot2 understands internally, `label`.  
+
+
 ```{r}
 compute_group_coordinates <- function(data, scales) {
 
 data |>
     mutate(label = 
-             paste0("(", data$x, ", ", data$y, ")"))
+             paste0("(", x, ", ", y, ")"))
 }
 ```
 
+Before we move on, it's a good idea to check out that our function is working on it's own.  To use the function, remember that we need a dataframe with the expected variables, `x` and `y`.  We can test the function with the cars dataset, but first we modify the data (that has variable names `speed` and `dist`) with the rename function. 
 
 ```{r}
 cars |> 
@@ -309,6 +317,8 @@ cars |>
 ```
 
 ### Step 2: pass to ggproto object
+
+The next step toward our user-facing function is to create a new Stat, which is a ggproto object.  Fortunately, this is a subclass of the ggplot2::Stat Class, and we will inherit much behavior from that class.  This means that definition of our class `StatCoordinate`, is quite straightforward.  For our target function, beyond creating the new class and declaring the inheritance, we'll need to 1) specify the required aesthetics and 2) pass our compute function to a compute slot.  The slot we're using for our coordinates case is compute_group.  Therefore, the compute will be done by group if any discrete variable (non-numeric) is mapped from the data.  The consequences of using the compute_group slot (verse other slots) will become more important in future examples.  Returning to the topic of required_aes, the coordinates label can always be created from x and y as an input, and we know that our compute function uses both variables named 'x' and 'y' in it's computation.
 
 ```{r}
 StatCoordinate <- ggplot2::ggproto(
@@ -321,7 +331,9 @@ StatCoordinate <- ggplot2::ggproto(
 
 ### Step 3. Write user facing function.
 
-A user-facing geom_* function will use the gggplot2::layer function under the hood.  geom_layer is actually an exported function in ggplot2 and can be used directly in ggplot() pipelines as shown below.
+In Step 3, we're close to our goal of a user-facing function for familiar ggplot2 builds.
+
+Under the hood, we'll pass our new Stat, StatCoordinate, to ggplot2's `layer()` function.  `ggplot2::layer()` is may not be familiar, but it can be used directly in ggplot() pipelines.  We pass our StatCoordinate ggproto object to the stat argument, handling the computation (adding a column of data containing coordinates and called 'label').  Additionally the ggplot2::GeomText object to the geom argument.  The 'geometry' or 'mark' on the plot therefore will be of the 'text' type.   
 
 ```{r}
 # part 3.0 use ggplot2::layer which requires specifying Geom and Stat
@@ -335,10 +347,7 @@ ggplot(data = cars) +
     )
 ```
 
-
-For convenience, the layer() function is usually wrapped to have a fixed stat or fixed geom.  In geom_text_coordinate, because the use-scope is so narrow, both the stat and geom are 'hard-coded' in the layer; i.e. stat and geom are not arguments in the geom_* function.
-
-We do anticipate that the user might want to have control over the data and aesthetic mapping specific to layer (rather than deriving them from global declarations), and therefore make the mapping and data arguments available.  Furthermore, the position, show.legend, inherit.aes, and na.rm arguments are made available in the geom as shown below. 
+You are probably more familiar with `geom_*()` functions which wrap this ggplot2::layer() function, with a fixed stat or fixed geom.  To create `geom_text_coordinate()`, because the use-scope is so narrow, both the stat and geom are 'hard-coded' in the layer; i.e. stat and geom are not arguments in the geom_* function.  Let's look at how we might wrap the layer function to create our `geom_text_coordinate()` target function.
 
 ```{r}
 # part b. create geom_* user-facing function using g
@@ -364,8 +373,11 @@ geom_text_coordinate <- function(mapping = NULL,
 
 ```
 
+You will see a few more arguments in play here: `mapping`, `data`, `position`, `show.legend`, etc..  We do anticipate that the user might want to have control over the data and aesthetic mapping specific to layer (rather than deriving them from global declarations), and therefore make the mapping and data arguments available.  Furthermore, the position, show.legend, inherit.aes, and na.rm arguments are made available in the geom as shown below.  The ellipsis allows you to leverage even more functionality.  In sum, this makes `geom_text_coordinate()` work very much like `geom_text()` --- you can use all the same arguments you'd use with geom_text() --- except that the label aesthetic is computed under the hood, and vanilla `geom_text()` requires you to specify the label aesthetic.  For example, you can use the argument `check_overlap` in `geom_text_coordinate()`, as you might do in `geom_text()`.
 
 ### Step 4: Use/test/enjoy
+
+Good news. You created a function for use in a ggplot2 pipeline!  Remember, you can basically use geom_text_coordinate in the same was as geom_text, but the label aesthetic is computed for you.  
 
 ```{r}
 ggplot(data = cars) + 
@@ -375,6 +387,11 @@ ggplot(data = cars) +
 
 last_plot() + 
   aes(color = speed > 15)
+
+last_plot() + 
+  geom_text_coordinate(check_overlap = T,
+                       color = "black") 
+
 ```
 
 ## geom_post: **1:1:1**
@@ -384,6 +401,8 @@ last_plot() +
 ```{r}
 probs_df = data.frame(outcome = 0:1, 
        prob = c(.75, .25))
+
+probs_df
 
 ggplot(data = probs_df) + 
   aes(x = outcome, y = prob, yend = 0, xend = outcome) + 
@@ -457,6 +476,9 @@ ggplot(data = probs_df) +
   aes(x = outcome, y = prob) + 
   geom_post()
 ```
+
+
+### More: combo geoms: lollipop
 
 
 ## geom_xy_means: **n:1:1** 
@@ -640,6 +662,11 @@ last_plot() +
 
 ---
 
+
+## geom_waterfall: compute_panel!!!!!!!!!!
+
+
+
 ## geom_circlepack: **1:1:n, interdependance**  *new*: defining `compute_panel` in ggproto
 
 *a many-row geom for each row of the input data frame, with interdependence between input observations.*
@@ -737,6 +764,10 @@ gapminder::gapminder |>
 
 last_plot() + 
   aes(fill = continent) 
+
+last_plot() + 
+  aes(fill = pop/1000000) + 
+  facet_wrap(facets = vars(continent))
 ```
 
 
@@ -746,9 +777,181 @@ last_plot() +
 
 *for each row in the dataframe, a single geometry is visualized, but each geom is defined by many rows...*
 
-```{r, child = "../mytidytuesday/2023-12-27-geom_circle_via_join/geom_circle_via_join.Rmd"}
+"../mytidytuesday/2023-12-27-geom_circle_via_join/geom_circle_via_join.Rmd"
+
+### Step 0. Do it with base ggplot2
+
+
+```{r}
+library(tidyverse)
+
+data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |> 
+  mutate(group = row_number()) |> 
+  crossing(tibble(z = 0:15)) |> 
+  mutate(around = 2*pi*z/max(z)) |> 
+  mutate(x = x0 + cos(around)*r,
+         y = y0 + sin(around)*r) |> 
+  ggplot() + 
+  aes(x, y, label = z) +
+  geom_text() +
+  geom_path(aes(group = group))
+```
+
+
+### Step 1. Compute
+
+
+```{r}
+compute_panel_circle <- function(data, scales, n_vertices = 15){
+  
+  data |> 
+    mutate(group = row_number()) |> 
+    crossing(tibble(z = 0:n_vertices)) |>
+    mutate(around = 2*pi*z/max(z)) |> 
+    mutate(x = x0 + cos(around)*r,
+           y = y0 + sin(around)*r) 
+  
+}
+
+tibble(x0 = 1:2, y0 = 1:2, r = 1 ) |> 
+  compute_panel_circle()
+```
+
+### Step 2. Pass to ggproto
+
+
+```{r}
+StatCircle <- ggproto(
+  `_class` = "StatCircle", 
+  `_inherit` = ggplot2::Stat,
+  compute_panel = compute_panel_circle,
+                      required_aes = c("x0", "y0", "r")
+                      )
+```
+
+
+### Step 3. Write geom_* or stat_*
+
+
+```{r}
+geom_circle <- function(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE, ...) {
+  ggplot2::layer(
+    stat = StatCircle,  # proto object from Step 2
+    geom = ggplot2::GeomPolygon,  # inherit other behavior
+    data = data,
+    mapping = mapping,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+```
+
+### Step 4: Enjoy (test)
+
+
+```{r}
+data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |> 
+  ggplot() + 
+  aes(x0 = x0, y0 = y0, r = r) + 
+  geom_circle(color = "red",
+              linetype = "dashed") + 
+  aes(fill = r)
+
+diamonds |> 
+  slice_sample(n = 80) |> 
+  ggplot() + 
+  aes(x0 = as.numeric(cut), y0 = carat, r = as.numeric(clarity)/20) + 
+  geom_circle(alpha = .2, n_vertices = 5) + 
+  aes(fill = after_stat(r)) +
+  coord_equal()
+
+cars |> 
+  sample_n(12) |>  
+  ggplot() + 
+  aes(x0 = speed, y0 = dist, r = dist/speed) + 
+  geom_circle(color = "black") +
+  coord_equal()
+
+last_plot() + 
+  aes(alpha = speed > 15) +
+  aes(linetype = dist > 20) +
+  aes(fill = speed > 18) +
+  facet_wrap(~ dist > 40)
+```
+
+### Discussion: Why not compute_group
+
+```{r}
+StatCircle2 <- ggproto(
+  `_class` = "StatCircle2",
+  `_inherit` = ggplot2::Stat,
+  compute_group = compute_panel_circle,
+  required_aes = c("x0", "y0", "r"))
+
+geom_circle_CG <- function(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE, ...) {
+  ggplot2::layer(
+    stat = StatCircle2,  # proto object from Step 2
+    geom = ggplot2::GeomPolygon,  # inherit other behavior
+    data = data,
+    mapping = mapping,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+
+cars |> 
+  sample_n(12) |>  
+  ggplot() + 
+  aes(x0 = speed, y0 = dist, r = dist/speed) + 
+  geom_circle_CG(color = "black") +
+  coord_equal() + 
+  aes(alpha = speed > 15) +
+  aes(linetype = dist > 20) +
+  aes(fill = speed > 18) +
+  facet_wrap(~ dist > 40)
+
 
 ```
+
+
+### Exercise: Write the function, geom_heart() that will take the compute below and do it within the geom_* function
+
+```{r}
+
+data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3, rotation = 0) %>% 
+  mutate(group = row_number()) %>% 
+  tidyr::crossing(around = 0:15/15) %>%
+    dplyr::mutate(
+      y = y0 + r * (
+        .85 * cos(2*pi*around)
+        - .35 * cos(2 * 2*pi*around)
+        - .25 * cos(3 * 2*pi*around)
+        - .05 * cos(4 * 2*pi*around)
+      ) - rotation * pi,
+      x = x0 + r * (sin(2*pi*around)^3) - rotation * pi) %>% 
+  ggplot() +
+   aes(x = x, y = y, group = group) + 
+  geom_polygon(alpha = .5, fill = "darkred") + 
+  coord_equal()
+
+```
+
 
 ## geom_state: **1:1:n**
 
@@ -756,15 +959,18 @@ last_plot() +
 ### Step 0:  use base ggplot2
 
 ```{r}
-us_states <- ggplot2::map_data("state")
-
-tibble(state.name) |> 
+states_characteristics <- tibble(state.name) |> 
   mutate(ind_vowel_states = 
-           str_detect(state.name, "A|E|I|O|U")) ->
-states_characteristics
+           str_detect(state.name, "A|E|I|O|U"))
+
+head(states_characteristics)
+
+us_states_geo <- ggplot2::map_data("state")
+
+head(us_states_geo)
 
 states_characteristics |> 
-  left_join(us_states |> mutate(state.name = stringr::str_to_title(region))) |> 
+  left_join(us_states_geo |> mutate(state.name = stringr::str_to_title(region))) |> 
   ggplot() + 
   aes(x = long, y = lat, group = group) +
   geom_polygon() +
@@ -969,7 +1175,8 @@ geom_county <- function(
       inherit.aes = TRUE,
       crs = "NAD27", # "NAD27", 5070, "WGS84", "NAD83", 4326 , 3857
       ...) {
-            c(ggplot2::layer_sf(
+
+  c(ggplot2::layer_sf(
               stat = StatNcfips,  # proto object from step 2
               geom = ggplot2::GeomSf,  # inherit other behavior
               data = data,
@@ -977,12 +1184,14 @@ geom_county <- function(
               position = position,
               show.legend = show.legend,
               inherit.aes = inherit.aes,
-              params = rlang::list2(na.rm = na.rm, ...)),
+              params = rlang::list2(na.rm = na.rm, ...)
+              ),
+              
               coord_sf(crs = crs,
                        default_crs = sf::st_crs(crs),
                        datum = crs,
                        default = TRUE)
-            )
+     )
   }
 ```
 
@@ -1253,13 +1462,77 @@ readlines_wo_roxygen("../ggverbatim/R/ggverbatim.R")
 
 # theme_chalkboard()
 
-```{r, code = readlines_wo_roxygen("../ggchalkboard/R/theme_chalkboard.R")}
+```{r}
+
+theme_chalkboard <- function(board_color = "darkseagreen4", chalk_color = "lightyellow"){
+
+  list(
+    ggplot2::theme(rect = ggplot2::element_rect(fill =
+                                                  board_color)),
+    ggplot2::theme(text = ggplot2::element_text(color = chalk_color,
+                                                face = "italic",
+                                                size = 15)),
+    ggplot2::theme(panel.background =
+                     ggplot2::element_rect(fill = board_color)),
+    ggplot2::theme(legend.key = ggplot2::element_blank()),
+    ggplot2::theme(legend.title = ggplot2::element_blank()),
+    ggplot2::theme(axis.text =
+                     ggplot2::element_text(color = chalk_color)),
+    ggplot2::theme(axis.ticks =
+                     ggplot2::element_line(color = chalk_color)),
+    ggplot2::theme(panel.grid = ggplot2::element_blank())
+  )
+
+}
+
+theme_chalkboard_slate <- function(){
+
+  theme_chalkboard("lightskyblue4", "honeydew")
+
+}
 
 ```
 
-# geom-led extension
+```{r}
+ggplot(data = cars) + 
+  aes(x = speed, dist) + 
+  geom_point() + 
+  theme_chalkboard()
 
-## ggscatterplot
+last_plot() + 
+  theme_chalkboard_slate()
+
+```
+
+
+```{r}
+geoms_chalk_on <- function(color = "lightyellow", fill = color){
+
+  # https://stackoverflow.com/questions/21174625/ggplot-how-to-set-default-color-for-all-geoms
+
+  ggplot2::update_geom_defaults("point",   list(colour = color, size = 2.5, alpha = .75))
+  ggplot2::update_geom_defaults("segment",   list(colour = color, size = 1.25, alpha = .75))
+  ggplot2::update_geom_defaults("rug",   list(colour = color, size = 1, alpha = .75))
+  ggplot2::update_geom_defaults("rect",   list(colour = color, size = 1, alpha = .75))
+  ggplot2::update_geom_defaults("label",   list(fill = fill, color = "grey35", size = 5))
+
+  # params <- ls(pattern = '^geom_', env = as.environment('package:ggxmean'))
+  # geoms <- gsub("geom_", "", params)
+  #
+  # lapply(geoms, update_geom_defaults, list(colour = "oldlace"))
+  # lapply(geoms, update_geom_defaults, list(colour = "oldlace"))
+
+}
+```
+
+
+```{r}
+geoms_chalk_on()
+
+last_plot()
+```
+
+## ggscatterplot(), rearrangement
 
 ```{r}
 

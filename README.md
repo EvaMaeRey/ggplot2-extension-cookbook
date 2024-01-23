@@ -20,6 +20,7 @@
           - [Step 3: Pass to user-facing function using
             ggplot2::layer()](#step-3-pass-to-user-facing-function-using-ggplot2layer)
           - [Step 4: use/test/enjoy](#step-4-usetestenjoy-1)
+          - [More: combo geoms: lollipop](#more-combo-geoms-lollipop)
       - [geom\_xy\_means: **n:1:1**](#geom_xy_means-n11)
           - [Step 0. Use base ggplot2](#step-0-use-base-ggplot2-2)
           - [Step 1. Write compute
@@ -37,6 +38,8 @@
           - [Step 3. Write user-facing geom\_/stat\_
             Function(s)](#step-3-write-user-facing-geom_stat_-functions)
           - [Step 4. Try out/test/ enjoy](#step-4-try-outtest-enjoy)
+      - [geom\_waterfall:
+        compute\_panel\!\!\!\!\!\!\!\!\!\!](#geom_waterfall-compute_panel)
       - [geom\_circlepack: **1:1:n, interdependance** *new*: defining
         `compute_panel` in
         ggproto](#geom_circlepack-11n-interdependance-new-defining-compute_panel-in-ggproto)
@@ -59,7 +62,7 @@
             stat\_\*](#step-3-write-geom_-or-stat_)
           - [Step 4: Enjoy (test)](#step-4-enjoy-test)
           - [Discussion: Why not
-            compute\_group?](#discussion-why-not-compute_group)
+            compute\_group](#discussion-why-not-compute_group)
           - [Exercise: Write the function, geom\_heart() that will take
             the compute below and do it within the geom\_\*
             function](#exercise-write-the-function-geom_heart-that-will-take-the-compute-below-and-do-it-within-the-geom_-function)
@@ -113,8 +116,7 @@
       - [ggverbatim()](#ggverbatim)
   - [ggedgelist()](#ggedgelist)
   - [theme\_chalkboard()](#theme_chalkboard)
-  - [geom-led extension](#geom-led-extension)
-      - [ggscatterplot](#ggscatterplot)
+      - [ggscatterplot(), rearrangement](#ggscatterplot-rearrangement)
   - [wrapping fiddly functions (annotate and
     theme)](#wrapping-fiddly-functions-annotate-and-theme)
   - [make it a package: ggtedious *formal
@@ -409,6 +411,12 @@ etc..
 
 ### Step 0: use base ggplot2
 
+We’ll always start with a ‘step 0’. The groundwork and knowledge that I
+assume you have is to build this plot without extending ggplot2. The
+computation that you do yourself will serve as useful reference for step
+1 of the extension process. Ultimately, we would like a ggplot2 function
+to do the compute in the background for us.
+
 ``` r
 library(tidyverse)
 library(ggxmean)
@@ -429,14 +437,34 @@ cars |>
 
 ### Step 1: compute
 
+Compute functions will capture the compute that our a user-facing
+function will ultimately do for us in a plot build. Arguments that are
+required for ggplot2 to use the function in its preparation are both
+`data` and `scales`. For now, we don’t need worry more about the scales
+argument.
+
+The data that serves as input can be assumed to contain columns with
+certain variable names — the required aesthetics that we’ll see declared
+in the next step. For the function that we’re building, the required
+aesthetics will be ‘x’ and ‘y’. In the `compute_group_coordinates()`
+function, therefore, the mutate step is possible because the data will
+have variables named x and y. In the mutate step, we are creating a
+variable that ggplot2 understands internally, `label`.
+
 ``` r
 compute_group_coordinates <- function(data, scales) {
 
 data |>
     mutate(label = 
-             paste0("(", data$x, ", ", data$y, ")"))
+             paste0("(", x, ", ", y, ")"))
 }
 ```
+
+Before we move on, it’s a good idea to check out that our function is
+working on it’s own. To use the function, remember that we need a
+dataframe with the expected variables, `x` and `y`. We can test the
+function with the cars dataset, but first we modify the data (that has
+variable names `speed` and `dist`) with the rename function.
 
 ``` r
 cars |> 
@@ -454,6 +482,21 @@ cars |>
 
 ### Step 2: pass to ggproto object
 
+The next step toward our user-facing function is to create a new Stat,
+which is a ggproto object. Fortunately, this is a subclass of the
+ggplot2::Stat Class, and we will inherit much behavior from that class.
+This means that definition of our class `StatCoordinate`, is quite
+straightforward. For our target function, beyond creating the new class
+and declaring the inheritance, we’ll need to 1) specify the required
+aesthetics and 2) pass our compute function to a compute slot. The slot
+we’re using for our coordinates case is compute\_group. Therefore, the
+compute will be done by group if any discrete variable (non-numeric) is
+mapped from the data. The consequences of using the compute\_group slot
+(verse other slots) will become more important in future examples.
+Returning to the topic of required\_aes, the coordinates label can
+always be created from x and y as an input, and we know that our compute
+function uses both variables named ‘x’ and ‘y’ in it’s computation.
+
 ``` r
 StatCoordinate <- ggplot2::ggproto(
   `_class` = "StatCoordinate",
@@ -465,9 +508,16 @@ StatCoordinate <- ggplot2::ggproto(
 
 ### Step 3. Write user facing function.
 
-A user-facing geom\_\* function will use the gggplot2::layer function
-under the hood. geom\_layer is actually an exported function in ggplot2
-and can be used directly in ggplot() pipelines as shown below.
+In Step 3, we’re close to our goal of a user-facing function for
+familiar ggplot2 builds.
+
+Under the hood, we’ll pass our new Stat, StatCoordinate, to ggplot2’s
+`layer()` function. `ggplot2::layer()` is may not be familiar, but it
+can be used directly in ggplot() pipelines. We pass our StatCoordinate
+ggproto object to the stat argument, handling the computation (adding a
+column of data containing coordinates and called ‘label’). Additionally
+the ggplot2::GeomText object to the geom argument. The ‘geometry’ or
+‘mark’ on the plot therefore will be of the ‘text’ type.
 
 ``` r
 # part 3.0 use ggplot2::layer which requires specifying Geom and Stat
@@ -483,16 +533,12 @@ ggplot(data = cars) +
 
 ![](man/figures/unnamed-chunk-12-1.png)<!-- -->
 
-For convenience, the layer() function is usually wrapped to have a fixed
-stat or fixed geom. In geom\_text\_coordinate, because the use-scope is
-so narrow, both the stat and geom are ‘hard-coded’ in the layer;
-i.e. stat and geom are not arguments in the geom\_\* function.
-
-We do anticipate that the user might want to have control over the data
-and aesthetic mapping specific to layer (rather than deriving them from
-global declarations), and therefore make the mapping and data arguments
-available. Furthermore, the position, show.legend, inherit.aes, and
-na.rm arguments are made available in the geom as shown below.
+You are probably more familiar with `geom_*()` functions which wrap this
+ggplot2::layer() function, with a fixed stat or fixed geom. To create
+`geom_text_coordinate()`, because the use-scope is so narrow, both the
+stat and geom are ‘hard-coded’ in the layer; i.e. stat and geom are not
+arguments in the geom\_\* function. Let’s look at how we might wrap the
+layer function to create our `geom_text_coordinate()` target function.
 
 ``` r
 # part b. create geom_* user-facing function using g
@@ -516,7 +562,26 @@ geom_text_coordinate <- function(mapping = NULL,
 }
 ```
 
+You will see a few more arguments in play here: `mapping`, `data`,
+`position`, `show.legend`, etc.. We do anticipate that the user might
+want to have control over the data and aesthetic mapping specific to
+layer (rather than deriving them from global declarations), and
+therefore make the mapping and data arguments available. Furthermore,
+the position, show.legend, inherit.aes, and na.rm arguments are made
+available in the geom as shown below. The ellipsis allows you to
+leverage even more functionality. In sum, this makes
+`geom_text_coordinate()` work very much like `geom_text()` — you can use
+all the same arguments you’d use with geom\_text() — except that the
+label aesthetic is computed under the hood, and vanilla `geom_text()`
+requires you to specify the label aesthetic. For example, you can use
+the argument `check_overlap` in `geom_text_coordinate()`, as you might
+do in `geom_text()`.
+
 ### Step 4: Use/test/enjoy
+
+Good news. You created a function for use in a ggplot2 pipeline\!
+Remember, you can basically use geom\_text\_coordinate in the same was
+as geom\_text, but the label aesthetic is computed for you.
 
 ``` r
 ggplot(data = cars) + 
@@ -535,6 +600,15 @@ last_plot() +
 
 ![](man/figures/unnamed-chunk-14-2.png)<!-- -->
 
+``` r
+
+last_plot() + 
+  geom_text_coordinate(check_overlap = T,
+                       color = "black") 
+```
+
+![](man/figures/unnamed-chunk-14-3.png)<!-- -->
+
 ## geom\_post: **1:1:1**
 
 ### Step 0. Use base ggplot2
@@ -542,6 +616,11 @@ last_plot() +
 ``` r
 probs_df = data.frame(outcome = 0:1, 
        prob = c(.75, .25))
+
+probs_df
+#>   outcome prob
+#> 1       0 0.75
+#> 2       1 0.25
 
 ggplot(data = probs_df) + 
   aes(x = outcome, y = prob, yend = 0, xend = outcome) + 
@@ -615,6 +694,8 @@ ggplot(data = probs_df) +
 ```
 
 ![](man/figures/unnamed-chunk-20-1.png)<!-- -->
+
+### More: combo geoms: lollipop
 
 ## geom\_xy\_means: **n:1:1**
 
@@ -825,6 +906,8 @@ last_plot() +
 
 -----
 
+## geom\_waterfall: compute\_panel\!\!\!\!\!\!\!\!\!\!
+
 ## geom\_circlepack: **1:1:n, interdependance** *new*: defining `compute_panel` in ggproto
 
 *a many-row geom for each row of the input data frame, with
@@ -934,6 +1017,20 @@ last_plot() +
 
 ![](man/figures/unnamed-chunk-36-2.png)<!-- -->
 
+``` r
+
+last_plot() + 
+  aes(fill = pop/1000000) + 
+  facet_wrap(facets = vars(continent))
+#> Joining with `by = join_by(id)`
+#> Joining with `by = join_by(id)`
+#> Joining with `by = join_by(id)`
+#> Joining with `by = join_by(id)`
+#> Joining with `by = join_by(id)`
+```
+
+![](man/figures/unnamed-chunk-36-3.png)<!-- -->
+
 ## geom\_circle: **1:1:n**, 🚧 *clarify the reason compute\_panel is needed*
 
 *a single row in a dataframe: will be visualized by a single mark : the
@@ -941,6 +1038,8 @@ mark will be defined by many-row in an internal dataframe*
 
 *for each row in the dataframe, a single geometry is visualized, but
 each geom is defined by many rows…*
+
+“../mytidytuesday/2023-12-27-geom\_circle\_via\_join/geom\_circle\_via\_join.Rmd”
 
 ### Step 0. Do it with base ggplot2
 
@@ -950,9 +1049,6 @@ library(tidyverse)
 data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |> 
   mutate(group = row_number()) |> 
   crossing(tibble(z = 0:15)) |> 
-  # mutate(join_var = 1) |> 
-  # left_join(tibble(z = 0:15, join_var = 1),
-  #           multiple = "all") |> 
   mutate(around = 2*pi*z/max(z)) |> 
   mutate(x = x0 + cos(around)*r,
          y = y0 + sin(around)*r) |> 
@@ -962,19 +1058,16 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |>
   geom_path(aes(group = group))
 ```
 
-![](man/figures/unnamed-chunk-72-1.png)<!-- -->
+![](man/figures/unnamed-chunk-37-1.png)<!-- -->
 
 ### Step 1. Compute
 
 ``` r
-compute_panel_equilateral <- function(data, scales, n = 15){
+compute_panel_circle <- function(data, scales, n_vertices = 15){
   
   data |> 
     mutate(group = row_number()) |> 
-    crossing(tibble(z = 0:n)) |>
-    # mutate(join_var = 1) |> 
-    # left_join(tibble(z = 0:(n), join_var = 1),
-    #         multiple = "all") |> 
+    crossing(tibble(z = 0:n_vertices)) |>
     mutate(around = 2*pi*z/max(z)) |> 
     mutate(x = x0 + cos(around)*r,
            y = y0 + sin(around)*r) 
@@ -982,7 +1075,7 @@ compute_panel_equilateral <- function(data, scales, n = 15){
 }
 
 tibble(x0 = 1:2, y0 = 1:2, r = 1 ) |> 
-  compute_panel_equilateral()
+  compute_panel_circle()
 #> # A tibble: 32 × 8
 #>       x0    y0     r group     z around      x     y
 #>    <int> <int> <dbl> <int> <int>  <dbl>  <dbl> <dbl>
@@ -1005,7 +1098,7 @@ tibble(x0 = 1:2, y0 = 1:2, r = 1 ) |>
 StatCircle <- ggproto(
   `_class` = "StatCircle", 
   `_inherit` = ggplot2::Stat,
-  compute_panel = compute_panel_equilateral,
+  compute_panel = compute_panel_circle,
                       required_aes = c("x0", "y0", "r")
                       )
 ```
@@ -1039,46 +1132,37 @@ geom_circle <- function(
 data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |> 
   ggplot() + 
   aes(x0 = x0, y0 = y0, r = r) + 
-  geom_circle() + 
+  geom_circle(color = "red",
+              linetype = "dashed") + 
   aes(fill = r)
 ```
 
-![](man/figures/unnamed-chunk-76-1.png)<!-- -->
+![](man/figures/unnamed-chunk-41-1.png)<!-- -->
 
 ``` r
 
 diamonds |> 
   slice_sample(n = 80) |> 
   ggplot() + 
-  aes(x0 = as.numeric(cut), y0 = carat  , r = as.numeric(clarity)/20) + 
-  geom_circle(alpha = .2) + 
+  aes(x0 = as.numeric(cut), y0 = carat, r = as.numeric(clarity)/20) + 
+  geom_circle(alpha = .2, n_vertices = 5) + 
   aes(fill = after_stat(r)) +
   coord_equal()
 ```
 
-![](man/figures/unnamed-chunk-76-2.png)<!-- -->
+![](man/figures/unnamed-chunk-41-2.png)<!-- -->
 
 ``` r
 
-cars |> 
-  ggplot() + 
-  aes(x0 = speed, y0 = dist, r = speed/dist) + 
-  geom_circle()
-```
-
-![](man/figures/unnamed-chunk-76-3.png)<!-- -->
-
-``` r
-  
 cars |> 
   sample_n(12) |>  
   ggplot() + 
-  aes(x0 = speed, y0 = dist, r = 3) + 
+  aes(x0 = speed, y0 = dist, r = dist/speed) + 
   geom_circle(color = "black") +
   coord_equal()
 ```
 
-![](man/figures/unnamed-chunk-76-4.png)<!-- -->
+![](man/figures/unnamed-chunk-41-3.png)<!-- -->
 
 ``` r
 
@@ -1090,15 +1174,15 @@ last_plot() +
 #> Warning: Using alpha for a discrete variable is not advised.
 ```
 
-![](man/figures/unnamed-chunk-76-5.png)<!-- -->
+![](man/figures/unnamed-chunk-41-4.png)<!-- -->
 
-### Discussion: Why not compute\_group?
+### Discussion: Why not compute\_group
 
 ``` r
 StatCircle2 <- ggproto(
   `_class` = "StatCircle2",
   `_inherit` = ggplot2::Stat,
-  compute_group = compute_panel_equilateral,
+  compute_group = compute_panel_circle,
   required_aes = c("x0", "y0", "r"))
 
 geom_circle_CG <- function(
@@ -1123,7 +1207,7 @@ geom_circle_CG <- function(
 cars |> 
   sample_n(12) |>  
   ggplot() + 
-  aes(x0 = speed, y0 = dist, r = 3) + 
+  aes(x0 = speed, y0 = dist, r = dist/speed) + 
   geom_circle_CG(color = "black") +
   coord_equal() + 
   aes(alpha = speed > 15) +
@@ -1133,11 +1217,12 @@ cars |>
 #> Warning: Using alpha for a discrete variable is not advised.
 ```
 
-![](man/figures/unnamed-chunk-77-1.png)<!-- -->
+![](man/figures/unnamed-chunk-42-1.png)<!-- -->
 
 ### Exercise: Write the function, geom\_heart() that will take the compute below and do it within the geom\_\* function
 
 ``` r
+
 data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3, rotation = 0) %>% 
   mutate(group = row_number()) %>% 
   tidyr::crossing(around = 0:15/15) %>%
@@ -1155,35 +1240,54 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3, rotation = 0) %>%
   coord_equal()
 ```
 
-![](man/figures/unnamed-chunk-78-1.png)<!-- -->
+![](man/figures/unnamed-chunk-43-1.png)<!-- -->
 
 ## geom\_state: **1:1:n**
 
 ### Step 0: use base ggplot2
 
 ``` r
-us_states <- ggplot2::map_data("state")
-
-tibble(state.name) |> 
+states_characteristics <- tibble(state.name) |> 
   mutate(ind_vowel_states = 
-           str_detect(state.name, "A|E|I|O|U")) ->
-states_characteristics
+           str_detect(state.name, "A|E|I|O|U"))
+
+head(states_characteristics)
+#> # A tibble: 6 × 2
+#>   state.name ind_vowel_states
+#>   <chr>      <lgl>           
+#> 1 Alabama    TRUE            
+#> 2 Alaska     TRUE            
+#> 3 Arizona    TRUE            
+#> 4 Arkansas   TRUE            
+#> 5 California FALSE           
+#> 6 Colorado   FALSE
+
+us_states_geo <- ggplot2::map_data("state")
+
+head(us_states_geo)
+#>        long      lat group order  region subregion
+#> 1 -87.46201 30.38968     1     1 alabama      <NA>
+#> 2 -87.48493 30.37249     1     2 alabama      <NA>
+#> 3 -87.52503 30.37249     1     3 alabama      <NA>
+#> 4 -87.53076 30.33239     1     4 alabama      <NA>
+#> 5 -87.57087 30.32665     1     5 alabama      <NA>
+#> 6 -87.58806 30.32665     1     6 alabama      <NA>
 
 states_characteristics |> 
-  left_join(us_states |> mutate(state.name = stringr::str_to_title(region))) |> 
+  left_join(us_states_geo |> mutate(state.name = stringr::str_to_title(region))) |> 
   ggplot() + 
   aes(x = long, y = lat, group = group) +
   geom_polygon() +
   aes(fill = ind_vowel_states) +
   coord_map()
 #> Joining with `by = join_by(state.name)`
-#> Warning in left_join(states_characteristics, mutate(us_states, state.name = stringr::str_to_title(region))): Each row in `x` is expected to match at most 1 row in `y`.
+#> Warning in left_join(states_characteristics, mutate(us_states_geo, state.name = stringr::str_to_title(region))): Each row in `x` is expected to match at most 1 row in `y`.
 #> ℹ Row 1 of `x` matches multiple rows.
 #> ℹ If multiple matches are expected, set `multiple = "all"` to silence this
 #>   warning.
 ```
 
-![](man/figures/unnamed-chunk-38-1.png)<!-- -->
+![](man/figures/unnamed-chunk-44-1.png)<!-- -->
 
 ### Step 1: Write compute function 🚧
 
@@ -1311,7 +1415,7 @@ nc_geo_reference |>
 #> Joining with `by = join_by(fips, FIPSNO)`
 ```
 
-![](man/figures/unnamed-chunk-46-1.png)<!-- -->
+![](man/figures/unnamed-chunk-52-1.png)<!-- -->
 
 ### Step 1. compute 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function*
 
@@ -1449,7 +1553,8 @@ geom_county <- function(
       inherit.aes = TRUE,
       crs = "NAD27", # "NAD27", 5070, "WGS84", "NAD83", 4326 , 3857
       ...) {
-            c(ggplot2::layer_sf(
+
+  c(ggplot2::layer_sf(
               stat = StatNcfips,  # proto object from step 2
               geom = ggplot2::GeomSf,  # inherit other behavior
               data = data,
@@ -1457,12 +1562,14 @@ geom_county <- function(
               position = position,
               show.legend = show.legend,
               inherit.aes = inherit.aes,
-              params = rlang::list2(na.rm = na.rm, ...)),
+              params = rlang::list2(na.rm = na.rm, ...)
+              ),
+              
               coord_sf(crs = crs,
                        default_crs = sf::st_crs(crs),
                        datum = crs,
                        default = TRUE)
-            )
+     )
   }
 ```
 
@@ -1476,7 +1583,7 @@ ggnorthcarolina::northcarolina_county_flat |>
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-51-1.png)<!-- -->
+![](man/figures/unnamed-chunk-57-1.png)<!-- -->
 
 ``` r
 
@@ -1489,7 +1596,7 @@ last_plot() +
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-51-2.png)<!-- -->
+![](man/figures/unnamed-chunk-57-2.png)<!-- -->
 
 ## geom\_candlestick summarize first, then interdependence …
 
@@ -1566,7 +1673,7 @@ p +
   stat_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-55-1.png)<!-- -->
+![](man/figures/unnamed-chunk-61-1.png)<!-- -->
 
 ``` r
 
@@ -1576,7 +1683,7 @@ p +
              size = 4)
 ```
 
-![](man/figures/unnamed-chunk-55-2.png)<!-- -->
+![](man/figures/unnamed-chunk-61-2.png)<!-- -->
 
 ``` r
 
@@ -1586,7 +1693,7 @@ p +
              hjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-55-3.png)<!-- -->
+![](man/figures/unnamed-chunk-61-3.png)<!-- -->
 
 ``` r
 
@@ -1599,7 +1706,7 @@ p +
 #> Ignoring unknown parameters: `label` and `hjust`
 ```
 
-![](man/figures/unnamed-chunk-55-4.png)<!-- -->
+![](man/figures/unnamed-chunk-61-4.png)<!-- -->
 
 ## stat\_waterfall: **1:1:1; interdependence**
 
@@ -1657,7 +1764,7 @@ flow_df |>
   scale_fill_manual(values = c("springgreen4", "darkred"))
 ```
 
-![](man/figures/unnamed-chunk-56-1.png)<!-- -->
+![](man/figures/unnamed-chunk-62-1.png)<!-- -->
 
 The strategy to create geom waterfall follows the standard four steps.
 
@@ -1775,7 +1882,7 @@ last_plot() +
   aes(x = fct_reorder(event, abs(change)))
 ```
 
-<img src="man/figures/unnamed-chunk-59-1.png" width="33%" /><img src="man/figures/unnamed-chunk-59-2.png" width="33%" /><img src="man/figures/unnamed-chunk-59-3.png" width="33%" />
+<img src="man/figures/unnamed-chunk-65-1.png" width="33%" /><img src="man/figures/unnamed-chunk-65-2.png" width="33%" /><img src="man/figures/unnamed-chunk-65-3.png" width="33%" />
 
 The final plot shows that while there are some convenience defaults for
 label and fill, these can be over-ridden.
@@ -1786,7 +1893,7 @@ last_plot() +
   aes(fill = NULL)
 ```
 
-![](man/figures/unnamed-chunk-60-1.png)<!-- -->
+![](man/figures/unnamed-chunk-66-1.png)<!-- -->
 
 # borrowing compute
 
@@ -1806,7 +1913,7 @@ ggplot(data = mtcars) +
 #> `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 ```
 
-![](man/figures/unnamed-chunk-61-1.png)<!-- --> \#\#\# Step 1. compute
+![](man/figures/unnamed-chunk-67-1.png)<!-- --> \#\#\# Step 1. compute
 
 ``` r
 compute_group_smooth_fit <- function(data, scales, method = NULL, formula = NULL,
@@ -1945,24 +2052,6 @@ geom_node_text_auto <- function(...){
 
 ``` r
 
-geoms_chalk <- function(color = "lightyellow", fill = color){
-
-  # https://stackoverflow.com/questions/21174625/ggplot-how-to-set-default-color-for-all-geoms
-
-  ggplot2::update_geom_defaults("point",   list(colour = color, size = 2.5, alpha = .75))
-  ggplot2::update_geom_defaults("segment",   list(colour = color, size = 1.25, alpha = .75))
-  ggplot2::update_geom_defaults("rug",   list(colour = color, size = 1, alpha = .75))
-  ggplot2::update_geom_defaults("rect",   list(colour = color, size = 1, alpha = .75))
-  ggplot2::update_geom_defaults("label",   list(fill = fill, color = "grey35", size = 5))
-
-  # params <- ls(pattern = '^geom_', env = as.environment('package:ggxmean'))
-  # geoms <- gsub("geom_", "", params)
-  #
-  # lapply(geoms, update_geom_defaults, list(colour = "oldlace"))
-  # lapply(geoms, update_geom_defaults, list(colour = "oldlace"))
-
-}
-
 theme_chalkboard <- function(board_color = "darkseagreen4", chalk_color = "lightyellow"){
 
   list(
@@ -1991,9 +2080,52 @@ theme_chalkboard_slate <- function(){
 }
 ```
 
-# geom-led extension
+``` r
+ggplot(data = cars) + 
+  aes(x = speed, dist) + 
+  geom_point() + 
+  theme_chalkboard()
+```
 
-## ggscatterplot
+![](man/figures/unnamed-chunk-74-1.png)<!-- -->
+
+``` r
+
+last_plot() + 
+  theme_chalkboard_slate()
+```
+
+![](man/figures/unnamed-chunk-74-2.png)<!-- -->
+
+``` r
+geoms_chalk_on <- function(color = "lightyellow", fill = color){
+
+  # https://stackoverflow.com/questions/21174625/ggplot-how-to-set-default-color-for-all-geoms
+
+  ggplot2::update_geom_defaults("point",   list(colour = color, size = 2.5, alpha = .75))
+  ggplot2::update_geom_defaults("segment",   list(colour = color, size = 1.25, alpha = .75))
+  ggplot2::update_geom_defaults("rug",   list(colour = color, size = 1, alpha = .75))
+  ggplot2::update_geom_defaults("rect",   list(colour = color, size = 1, alpha = .75))
+  ggplot2::update_geom_defaults("label",   list(fill = fill, color = "grey35", size = 5))
+
+  # params <- ls(pattern = '^geom_', env = as.environment('package:ggxmean'))
+  # geoms <- gsub("geom_", "", params)
+  #
+  # lapply(geoms, update_geom_defaults, list(colour = "oldlace"))
+  # lapply(geoms, update_geom_defaults, list(colour = "oldlace"))
+
+}
+```
+
+``` r
+geoms_chalk_on()
+
+last_plot()
+```
+
+![](man/figures/unnamed-chunk-76-1.png)<!-- -->
+
+## ggscatterplot(), rearrangement
 
 # wrapping fiddly functions (annotate and theme)
 
