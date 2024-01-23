@@ -13,55 +13,64 @@
           - [Step 3. Write user facing
             function.](#step-3-write-user-facing-function)
           - [Step 4: Use/test/enjoy](#step-4-usetestenjoy)
-      - [geom\_post: **1:1:1** 🚧 *this is a nice example.
-        Add\!*](#geom_post-111--this-is-a-nice-example-add)
-      - [geom\_xy\_means: **n:1:1**](#geom_xy_means-n11)
+      - [geom\_post: **1:1:1**](#geom_post-111)
           - [Step 0. Use base ggplot2](#step-0-use-base-ggplot2-1)
+          - [Step 1: Compute](#step-1-compute-1)
+          - [Step 2: Pass to ggproto](#step-2-pass-to-ggproto)
+          - [Step 3: Pass to user-facing function using
+            ggplot2::layer()](#step-3-pass-to-user-facing-function-using-ggplot2layer)
+          - [Step 4: use/test/enjoy](#step-4-usetestenjoy-1)
+      - [geom\_xy\_means: **n:1:1**](#geom_xy_means-n11)
+          - [Step 0. Use base ggplot2](#step-0-use-base-ggplot2-2)
           - [Step 1. Write compute
             function](#step-1-write-compute-function)
           - [Step 2. Define Stat, pasing in
             compute](#step-2-define-stat-pasing-in-compute)
           - [Step 3. Write user-facing
             function](#step-3-write-user-facing-function-1)
-          - [Step 4. Use/Test/Enjoy](#step-4-usetestenjoy-1)
+          - [Step 4. Use/Test/Enjoy](#step-4-usetestenjoy-2)
       - [geom\_chull: **N:1:n**](#geom_chull-n1n)
           - [Step 0. get it done with
             ggplot2](#step-0-get-it-done-with-ggplot2)
-          - [Step 1. Compute](#step-1-compute-1)
-          - [Step 2. Pass to ggproto](#step-2-pass-to-ggproto)
+          - [Step 1. Compute](#step-1-compute-2)
+          - [Step 2. Pass to ggproto](#step-2-pass-to-ggproto-1)
           - [Step 3. Write user-facing geom\_/stat\_
             Function(s)](#step-3-write-user-facing-geom_stat_-functions)
           - [Step 4. Try out/test/ enjoy](#step-4-try-outtest-enjoy)
-      - [geom\_ggcirclepack: **1:1:n, interdependance** *new*: defining
+      - [geom\_circlepack: **1:1:n, interdependance** *new*: defining
         `compute_panel` in
-        ggproto](#geom_ggcirclepack-11n-interdependance-new-defining-compute_panel-in-ggproto)
-          - [Step 0. 🚧 *Add how-to w/ base
-            ggplot2*](#step-0--add-how-to-w-base-ggplot2)
-          - [Step 1. Compute](#step-1-compute-2)
+        ggproto](#geom_circlepack-11n-interdependance-new-defining-compute_panel-in-ggproto)
+          - [Step 0. How-to w/ base ggplot2 (and
+            {packcircles})](#step-0-how-to-w-base-ggplot2-and-packcircles)
+          - [Step 1. Compute](#step-1-compute-3)
           - [Step 2. pass to ggproto
             object](#step-2-pass-to-ggproto-object-1)
           - [Step 3. pass to user-facing
             function](#step-3-pass-to-user-facing-function)
-          - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-2)
+          - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-3)
       - [geom\_circle: **1:1:n**, 🚧 *clarify the reason compute\_panel
         is
         needed*](#geom_circle-11n--clarify-the-reason-compute_panel-is-needed)
           - [Step 0. Do it with base
             ggplot2](#step-0-do-it-with-base-ggplot2)
-          - [Step 1. Compute](#step-1-compute-3)
-          - [Step 2. Pass to ggproto](#step-2-pass-to-ggproto-1)
+          - [Step 1. Compute](#step-1-compute-4)
+          - [Step 2. Pass to ggproto](#step-2-pass-to-ggproto-2)
           - [Step 3. Write geom\_\* or
             stat\_\*](#step-3-write-geom_-or-stat_)
           - [Step 4: Enjoy (test)](#step-4-enjoy-test)
-          - [Why not compute\_group?](#why-not-compute_group)
+          - [Discussion: Why not
+            compute\_group?](#discussion-why-not-compute_group)
+          - [Exercise: Write the function, geom\_heart() that will take
+            the compute below and do it within the geom\_\*
+            function](#exercise-write-the-function-geom_heart-that-will-take-the-compute-below-and-do-it-within-the-geom_-function)
       - [geom\_state: **1:1:n**](#geom_state-11n)
-          - [Step 0: use base ggplot2](#step-0-use-base-ggplot2-2)
+          - [Step 0: use base ggplot2](#step-0-use-base-ggplot2-3)
           - [Step 1: Write compute function
             🚧](#step-1-write-compute-function-)
-          - [Step 2. Pass to ggproto](#step-2-pass-to-ggproto-2)
+          - [Step 2. Pass to ggproto](#step-2-pass-to-ggproto-3)
           - [Step 3. Pass to user-facing
             function](#step-3-pass-to-user-facing-function-1)
-          - [Step 4. Use/Test/Enjoy](#step-4-usetestenjoy-3)
+          - [Step 4. Use/Test/Enjoy](#step-4-usetestenjoy-4)
       - [geom\_ols: **n:k:w;
         interdependence**](#geom_ols-nkw-interdependence)
       - [geom\_county: **1:1:1
@@ -77,7 +86,7 @@
             see if xmin, xmax columns can be added within compute using
             ggplot2 function; more to figure out with
             CRSs*](#step-3-pass-to-user-facing-function-wrapping-ggplotlayer_sf-instead-of-ggplot2layer--want-to-see-if-xmin-xmax-columns-can-be-added-within-compute-using-ggplot2-function-more-to-figure-out-with-crss)
-          - [Step 4. Use/test/enjoy\!](#step-4-usetestenjoy-4)
+          - [Step 4. Use/test/enjoy\!](#step-4-usetestenjoy-5)
       - [geom\_candlestick summarize first, then interdependence
         …](#geom_candlestick-summarize-first-then-interdependence-)
       - [geom\_pie: **n -\> 1:1:1**](#geom_pie-n---111)
@@ -418,18 +427,6 @@ cars |>
 
 ![](man/figures/unnamed-chunk-8-1.png)<!-- -->
 
-Step 0.b But we might like the concise syntax…
-
-``` r
-ggplot(cars) + 
-  aes(x = speed, y = dist) + 
-  geom_point() + 
-  geom_text_coordinate(
-            check_overlap = T,
-            hjust = 0,
-            vjust = 0)
-```
-
 ### Step 1: compute
 
 ``` r
@@ -439,7 +436,9 @@ data |>
     mutate(label = 
              paste0("(", data$x, ", ", data$y, ")"))
 }
+```
 
+``` r
 cars |> 
   rename(x = speed, y = dist) |> 
   compute_group_coordinates() |> 
@@ -536,7 +535,86 @@ last_plot() +
 
 ![](man/figures/unnamed-chunk-14-2.png)<!-- -->
 
-## geom\_post: **1:1:1** 🚧 *this is a nice example. Add\!*
+## geom\_post: **1:1:1**
+
+### Step 0. Use base ggplot2
+
+``` r
+probs_df = data.frame(outcome = 0:1, 
+       prob = c(.75, .25))
+
+ggplot(data = probs_df) + 
+  aes(x = outcome, y = prob, yend = 0, xend = outcome) + 
+  geom_point() +
+  geom_segment()
+```
+
+![](man/figures/unnamed-chunk-15-1.png)<!-- -->
+
+### Step 1: Compute
+
+``` r
+compute_group_post <- function(data, scales){
+  
+  data |>
+    dplyr::mutate(xend = x) |>
+    dplyr::mutate(yend = 0)
+  
+}
+```
+
+``` r
+probs_df |>
+  rename(x = outcome, y = prob) |>
+  compute_group_post()
+#>   x    y xend yend
+#> 1 0 0.75    0    0
+#> 2 1 0.25    1    0
+```
+
+### Step 2: Pass to ggproto
+
+``` r
+StatPost <- ggplot2::ggproto("StatPost",
+                               ggplot2::Stat,
+                               compute_group = compute_group_post,
+                               required_aes = c("x", "y")
+)
+```
+
+### Step 3: Pass to user-facing function using ggplot2::layer()
+
+``` r
+geom_post <- function(mapping = NULL, 
+                          data = NULL,
+                          position = "identity", 
+                          na.rm = FALSE, 
+                          show.legend = NA,
+                          inherit.aes = TRUE, ...) {
+
+  ggplot2::layer(
+    stat = StatPost, 
+    geom = ggplot2::GeomSegment, 
+    data = data, 
+    mapping = mapping,
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+
+}
+```
+
+### Step 4: use/test/enjoy
+
+``` r
+ggplot(data = probs_df) + 
+  aes(x = outcome, y = prob) + 
+  geom_post()
+```
+
+![](man/figures/unnamed-chunk-20-1.png)<!-- -->
 
 ## geom\_xy\_means: **n:1:1**
 
@@ -558,7 +636,7 @@ ggplot(mtcars) +
              size = 8)
 ```
 
-![](man/figures/unnamed-chunk-16-1.png)<!-- -->
+![](man/figures/unnamed-chunk-21-1.png)<!-- -->
 
 ### Step 1. Write compute function
 
@@ -615,7 +693,7 @@ ggplot(mtcars) +
   geom_xy_means(size = 8)
 ```
 
-![](man/figures/unnamed-chunk-20-1.png)<!-- -->
+![](man/figures/unnamed-chunk-25-1.png)<!-- -->
 
 ``` r
 
@@ -623,7 +701,7 @@ last_plot() +
   aes(color = am == 1)
 ```
 
-![](man/figures/unnamed-chunk-20-2.png)<!-- -->
+![](man/figures/unnamed-chunk-25-2.png)<!-- -->
 
 ## geom\_chull: **N:1:n**
 
@@ -656,7 +734,7 @@ ggplot(mtcars) +
                color = "black")
 ```
 
-![](man/figures/unnamed-chunk-21-1.png)<!-- -->
+![](man/figures/unnamed-chunk-26-1.png)<!-- -->
 
 ### Step 1. Compute
 
@@ -734,7 +812,7 @@ ggplot(data = mtcars) +
   geom_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-26-1.png)<!-- -->
+![](man/figures/unnamed-chunk-31-1.png)<!-- -->
 
 ``` r
 
@@ -743,16 +821,38 @@ last_plot() +
       fill = factor(am))
 ```
 
-![](man/figures/unnamed-chunk-26-2.png)<!-- -->
+![](man/figures/unnamed-chunk-31-2.png)<!-- -->
 
 -----
 
-## geom\_ggcirclepack: **1:1:n, interdependance** *new*: defining `compute_panel` in ggproto
+## geom\_circlepack: **1:1:n, interdependance** *new*: defining `compute_panel` in ggproto
 
 *a many-row geom for each row of the input data frame, with
 interdependence between input observations.*
 
-### Step 0. 🚧 *Add how-to w/ base ggplot2*
+### Step 0. How-to w/ base ggplot2 (and {packcircles})
+
+``` r
+df_to_plot <- gapminder::gapminder %>%  
+  filter(continent == "Americas") %>%  
+  filter(year == 2002) %>%  
+  select(country, pop)
+
+packed_centers <- packcircles::circleProgressiveLayout(
+  df_to_plot$pop,  sizetype = 'area')  
+
+circle_outlines <- packed_centers %>%  
+  packcircles::circleLayoutVertices(npoints = 50)  
+  
+circle_outlines %>%  
+  ggplot() +  
+  aes(x = x, y = y) +  
+  geom_polygon() +  
+  aes(group = id) + 
+  coord_equal()
+```
+
+![](man/figures/unnamed-chunk-32-1.png)<!-- -->
 
 ### Step 1. Compute
 
@@ -760,24 +860,23 @@ interdependence between input observations.*
 # Step 1
 compute_panel_circlepack <- function(data, scales){
 
-  data |>
-    mutate(id = row_number()) ->
-    data1
+  data_w_id <- data |>
+    mutate(id = row_number())
 
   if(is.null(data$area)){
 
-    data1 |>
-      mutate(area = 1) ->
-      data1
+    data_w_id <- data_w_id |>
+      mutate(area = 1)
 
   }
 
-  data1 |>
+  data_w_id |>
     pull(area) |>
     packcircles::circleProgressiveLayout(
       sizetype = 'area') |>
     packcircles::circleLayoutVertices(npoints = 50) |>
-    left_join(data1) #|>
+    left_join(data_w_id) |>
+    mutate(group = id)
 
 }
 ```
@@ -788,8 +887,8 @@ compute_panel_circlepack <- function(data, scales){
 StatCirclepack <- ggplot2::ggproto(`_class` = "StatCirclepack",
                                   `_inherit` = ggplot2::Stat,
                                   required_aes = c("id"),
-                                  compute_panel = compute_panel_circlepack,
-                                  default_aes = ggplot2::aes(group = after_stat(id))
+                                  compute_panel = compute_panel_circlepack#,
+                                  # default_aes = ggplot2::aes(group = after_stat(id))
                                   )
 ```
 
@@ -819,84 +918,84 @@ geom_circlepack <- function(mapping = NULL, data = NULL,
 gapminder::gapminder |> 
   filter(year == 2002) |> 
   ggplot() + 
-  aes(id = country, fill = pop/1000000) + 
+  aes(id = country, area = pop/1000000) + 
   geom_circlepack()
 #> Joining with `by = join_by(id)`
 ```
 
-![](man/figures/unnamed-chunk-30-1.png)<!-- -->
+![](man/figures/unnamed-chunk-36-1.png)<!-- -->
 
 ``` r
 
 last_plot() + 
-  aes(area = pop/1000000) 
+  aes(fill = continent) 
 #> Joining with `by = join_by(id)`
 ```
 
-![](man/figures/unnamed-chunk-30-2.png)<!-- -->
+![](man/figures/unnamed-chunk-36-2.png)<!-- -->
 
 ## geom\_circle: **1:1:n**, 🚧 *clarify the reason compute\_panel is needed*
 
 *a single row in a dataframe: will be visualized by a single mark : the
 mark will be defined by many-row in an internal dataframe*
 
-for each row in the dataframe, a single geometry is visualized, but each
-geom is defined by many rows…
+*for each row in the dataframe, a single geometry is visualized, but
+each geom is defined by many rows…*
 
 ### Step 0. Do it with base ggplot2
 
 ``` r
 library(tidyverse)
 
-data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>% 
-  mutate(join_var = 1) %>% 
-  mutate(group = row_number()) %>% 
-  left_join(tibble(z = 0:15, join_var = 1),
-            multiple = "all") %>% 
-  mutate(around = 2*pi*z/max(z)) %>% 
+data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |> 
+  mutate(group = row_number()) |> 
+  crossing(tibble(z = 0:15)) |> 
+  # mutate(join_var = 1) |> 
+  # left_join(tibble(z = 0:15, join_var = 1),
+  #           multiple = "all") |> 
+  mutate(around = 2*pi*z/max(z)) |> 
   mutate(x = x0 + cos(around)*r,
-         y = y0 + sin(around)*r) %>% 
+         y = y0 + sin(around)*r) |> 
   ggplot() + 
   aes(x, y, label = z) +
   geom_text() +
   geom_path(aes(group = group))
-#> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-66-1.png)<!-- -->
+![](man/figures/unnamed-chunk-72-1.png)<!-- -->
 
 ### Step 1. Compute
 
 ``` r
 compute_panel_equilateral <- function(data, scales, n = 15){
   
-  data %>% 
-    mutate(join_var = 1, 
-           group = row_number()) %>% 
-  left_join(tibble(z = 0:(n), join_var = 1),
-            multiple = "all") %>% 
-  mutate(around = 2*pi*z/max(z)) %>% 
-  mutate(x = x0 + cos(around)*r,
-         y = y0 + sin(around)*r) 
+  data |> 
+    mutate(group = row_number()) |> 
+    crossing(tibble(z = 0:n)) |>
+    # mutate(join_var = 1) |> 
+    # left_join(tibble(z = 0:(n), join_var = 1),
+    #         multiple = "all") |> 
+    mutate(around = 2*pi*z/max(z)) |> 
+    mutate(x = x0 + cos(around)*r,
+           y = y0 + sin(around)*r) 
   
 }
 
-tibble(x0 = 1:2, y0 = 1:2, r = 1 ) %>% 
+tibble(x0 = 1:2, y0 = 1:2, r = 1 ) |> 
   compute_panel_equilateral()
-#> Joining with `by = join_by(join_var)`
-#> # A tibble: 32 × 9
-#>       x0    y0     r join_var group     z around      x     y
-#>    <int> <int> <dbl>    <dbl> <int> <int>  <dbl>  <dbl> <dbl>
-#>  1     1     1     1        1     1     0  0     2      1    
-#>  2     1     1     1        1     1     1  0.419 1.91   1.41 
-#>  3     1     1     1        1     1     2  0.838 1.67   1.74 
-#>  4     1     1     1        1     1     3  1.26  1.31   1.95 
-#>  5     1     1     1        1     1     4  1.68  0.895  1.99 
-#>  6     1     1     1        1     1     5  2.09  0.5    1.87 
-#>  7     1     1     1        1     1     6  2.51  0.191  1.59 
-#>  8     1     1     1        1     1     7  2.93  0.0219 1.21 
-#>  9     1     1     1        1     1     8  3.35  0.0219 0.792
-#> 10     1     1     1        1     1     9  3.77  0.191  0.412
+#> # A tibble: 32 × 8
+#>       x0    y0     r group     z around      x     y
+#>    <int> <int> <dbl> <int> <int>  <dbl>  <dbl> <dbl>
+#>  1     1     1     1     1     0  0     2      1    
+#>  2     1     1     1     1     1  0.419 1.91   1.41 
+#>  3     1     1     1     1     2  0.838 1.67   1.74 
+#>  4     1     1     1     1     3  1.26  1.31   1.95 
+#>  5     1     1     1     1     4  1.68  0.895  1.99 
+#>  6     1     1     1     1     5  2.09  0.5    1.87 
+#>  7     1     1     1     1     6  2.51  0.191  1.59 
+#>  8     1     1     1     1     7  2.93  0.0219 1.21 
+#>  9     1     1     1     1     8  3.35  0.0219 0.792
+#> 10     1     1     1     1     9  3.77  0.191  0.412
 #> # ℹ 22 more rows
 ```
 
@@ -937,53 +1036,49 @@ geom_circle <- function(
 ### Step 4: Enjoy (test)
 
 ``` r
-data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>% 
+data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |> 
   ggplot() + 
   aes(x0 = x0, y0 = y0, r = r) + 
   geom_circle() + 
   aes(fill = r)
-#> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-70-1.png)<!-- -->
+![](man/figures/unnamed-chunk-76-1.png)<!-- -->
 
 ``` r
 
-diamonds %>% 
-  slice_sample(n = 80) %>% 
+diamonds |> 
+  slice_sample(n = 80) |> 
   ggplot() + 
-  aes(x0 = cut %>% as.numeric, y0 = carat  , r = clarity %>% as.numeric()/20) + 
+  aes(x0 = as.numeric(cut), y0 = carat  , r = as.numeric(clarity)/20) + 
   geom_circle(alpha = .2) + 
   aes(fill = after_stat(r)) +
   coord_equal()
-#> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-70-2.png)<!-- -->
+![](man/figures/unnamed-chunk-76-2.png)<!-- -->
 
 ``` r
 
-cars %>% 
+cars |> 
   ggplot() + 
   aes(x0 = speed, y0 = dist, r = speed/dist) + 
   geom_circle()
-#> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-70-3.png)<!-- -->
+![](man/figures/unnamed-chunk-76-3.png)<!-- -->
 
 ``` r
   
-cars %>% 
-  sample_n(12) %>%  
+cars |> 
+  sample_n(12) |>  
   ggplot() + 
   aes(x0 = speed, y0 = dist, r = 3) + 
   geom_circle(color = "black") +
   coord_equal()
-#> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-70-4.png)<!-- -->
+![](man/figures/unnamed-chunk-76-4.png)<!-- -->
 
 ``` r
 
@@ -993,13 +1088,11 @@ last_plot() +
   aes(fill = speed > 18) +
   facet_wrap(~ dist > 40)
 #> Warning: Using alpha for a discrete variable is not advised.
-#> Joining with `by = join_by(join_var)`
-#> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-70-5.png)<!-- -->
+![](man/figures/unnamed-chunk-76-5.png)<!-- -->
 
-### Why not compute\_group?
+### Discussion: Why not compute\_group?
 
 ``` r
 StatCircle2 <- ggproto(
@@ -1027,8 +1120,8 @@ geom_circle_CG <- function(
   )
 }
 
-cars %>% 
-  sample_n(12) %>%  
+cars |> 
+  sample_n(12) |>  
   ggplot() + 
   aes(x0 = speed, y0 = dist, r = 3) + 
   geom_circle_CG(color = "black") +
@@ -1038,14 +1131,31 @@ cars %>%
   aes(fill = speed > 18) +
   facet_wrap(~ dist > 40)
 #> Warning: Using alpha for a discrete variable is not advised.
-#> Joining with `by = join_by(join_var)`
-#> Joining with `by = join_by(join_var)`
-#> Joining with `by = join_by(join_var)`
-#> Joining with `by = join_by(join_var)`
-#> Joining with `by = join_by(join_var)`
 ```
 
-![](man/figures/unnamed-chunk-71-1.png)<!-- -->
+![](man/figures/unnamed-chunk-77-1.png)<!-- -->
+
+### Exercise: Write the function, geom\_heart() that will take the compute below and do it within the geom\_\* function
+
+``` r
+data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3, rotation = 0) %>% 
+  mutate(group = row_number()) %>% 
+  tidyr::crossing(around = 0:15/15) %>%
+    dplyr::mutate(
+      y = y0 + r * (
+        .85 * cos(2*pi*around)
+        - .35 * cos(2 * 2*pi*around)
+        - .25 * cos(3 * 2*pi*around)
+        - .05 * cos(4 * 2*pi*around)
+      ) - rotation * pi,
+      x = x0 + r * (sin(2*pi*around)^3) - rotation * pi) %>% 
+  ggplot() +
+   aes(x = x, y = y, group = group) + 
+  geom_polygon(alpha = .5, fill = "darkred") + 
+  coord_equal()
+```
+
+![](man/figures/unnamed-chunk-78-1.png)<!-- -->
 
 ## geom\_state: **1:1:n**
 
@@ -1073,7 +1183,7 @@ states_characteristics |>
 #>   warning.
 ```
 
-![](man/figures/unnamed-chunk-32-1.png)<!-- -->
+![](man/figures/unnamed-chunk-38-1.png)<!-- -->
 
 ### Step 1: Write compute function 🚧
 
@@ -1095,7 +1205,8 @@ continental_states_geo_reference
 compute_panel_state <- function(data, scales){
   
   data |> 
-    left_join(continental_states_geo_reference)
+    dplyr::left_join(continental_states_geo_reference) |>
+    dplyr::mutate(group = geometry_group)
   
 }
 ```
@@ -1107,23 +1218,23 @@ states_characteristics |>
   rename(state_name = state.name) |> 
   compute_panel_state()
 #> Joining with `by = join_by(state_name)`
-#> Warning in left_join(data, continental_states_geo_reference): Each row in `x` is expected to match at most 1 row in `y`.
+#> Warning in dplyr::left_join(data, continental_states_geo_reference): Each row in `x` is expected to match at most 1 row in `y`.
 #> ℹ Row 1 of `x` matches multiple rows.
 #> ℹ If multiple matches are expected, set `multiple = "all"` to silence this
 #>   warning.
-#> # A tibble: 15,529 × 6
-#>    state_name ind_vowel_states     x     y geometry_group order
-#>    <chr>      <lgl>            <dbl> <dbl>          <dbl> <int>
-#>  1 Alabama    TRUE             -87.5  30.4              1     1
-#>  2 Alabama    TRUE             -87.5  30.4              1     2
-#>  3 Alabama    TRUE             -87.5  30.4              1     3
-#>  4 Alabama    TRUE             -87.5  30.3              1     4
-#>  5 Alabama    TRUE             -87.6  30.3              1     5
-#>  6 Alabama    TRUE             -87.6  30.3              1     6
-#>  7 Alabama    TRUE             -87.6  30.3              1     7
-#>  8 Alabama    TRUE             -87.6  30.3              1     8
-#>  9 Alabama    TRUE             -87.7  30.3              1     9
-#> 10 Alabama    TRUE             -87.8  30.3              1    10
+#> # A tibble: 15,529 × 7
+#>    state_name ind_vowel_states     x     y geometry_group order group
+#>    <chr>      <lgl>            <dbl> <dbl>          <dbl> <int> <dbl>
+#>  1 Alabama    TRUE             -87.5  30.4              1     1     1
+#>  2 Alabama    TRUE             -87.5  30.4              1     2     1
+#>  3 Alabama    TRUE             -87.5  30.4              1     3     1
+#>  4 Alabama    TRUE             -87.5  30.3              1     4     1
+#>  5 Alabama    TRUE             -87.6  30.3              1     5     1
+#>  6 Alabama    TRUE             -87.6  30.3              1     6     1
+#>  7 Alabama    TRUE             -87.6  30.3              1     7     1
+#>  8 Alabama    TRUE             -87.6  30.3              1     8     1
+#>  9 Alabama    TRUE             -87.7  30.3              1     9     1
+#> 10 Alabama    TRUE             -87.8  30.3              1    10     1
 #> # ℹ 15,519 more rows
 ```
 
@@ -1133,9 +1244,10 @@ states_characteristics |>
 StatUsstate <- ggplot2::ggproto(`_class` = "StatUsstate",
                                 `_inherit` = ggplot2::Stat,
                                 required_aes = c("state_name"),
-                                compute_panel = compute_panel_state,
-                                default_aes = aes(group =
-                                                    after_stat(geometry_group)))
+                                compute_panel = compute_panel_state#,
+                                #default_aes = aes(group =
+                                                    # after_stat(geometry_group))
+)
 ```
 
 ### Step 3. Pass to user-facing function
@@ -1199,7 +1311,7 @@ nc_geo_reference |>
 #> Joining with `by = join_by(fips, FIPSNO)`
 ```
 
-![](man/figures/unnamed-chunk-40-1.png)<!-- -->
+![](man/figures/unnamed-chunk-46-1.png)<!-- -->
 
 ### Step 1. compute 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function*
 
@@ -1322,9 +1434,7 @@ compute_panel_county <- function(data, scales){
 StatNcfips <- ggplot2::ggproto(`_class` = "StatNcfips",
                                 `_inherit` = ggplot2::Stat,
                                 required_aes = "fips|county_name",
-                                compute_panel = compute_panel_county,
-                                default_aes = aes(geometry =
-                                                    after_stat(geometry)))
+                                compute_panel = compute_panel_county)
 ```
 
 ### Step 3. pass to user-facing function (wrapping ggplot::layer\_sf() instead of ggplot2::layer()) 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function; more to figure out with CRSs*
@@ -1366,7 +1476,7 @@ ggnorthcarolina::northcarolina_county_flat |>
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-45-1.png)<!-- -->
+![](man/figures/unnamed-chunk-51-1.png)<!-- -->
 
 ``` r
 
@@ -1379,7 +1489,7 @@ last_plot() +
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-45-2.png)<!-- -->
+![](man/figures/unnamed-chunk-51-2.png)<!-- -->
 
 ## geom\_candlestick summarize first, then interdependence …
 
@@ -1456,7 +1566,7 @@ p +
   stat_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-49-1.png)<!-- -->
+![](man/figures/unnamed-chunk-55-1.png)<!-- -->
 
 ``` r
 
@@ -1466,7 +1576,7 @@ p +
              size = 4)
 ```
 
-![](man/figures/unnamed-chunk-49-2.png)<!-- -->
+![](man/figures/unnamed-chunk-55-2.png)<!-- -->
 
 ``` r
 
@@ -1476,7 +1586,7 @@ p +
              hjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-49-3.png)<!-- -->
+![](man/figures/unnamed-chunk-55-3.png)<!-- -->
 
 ``` r
 
@@ -1489,7 +1599,7 @@ p +
 #> Ignoring unknown parameters: `label` and `hjust`
 ```
 
-![](man/figures/unnamed-chunk-49-4.png)<!-- -->
+![](man/figures/unnamed-chunk-55-4.png)<!-- -->
 
 ## stat\_waterfall: **1:1:1; interdependence**
 
@@ -1547,7 +1657,7 @@ flow_df |>
   scale_fill_manual(values = c("springgreen4", "darkred"))
 ```
 
-![](man/figures/unnamed-chunk-50-1.png)<!-- -->
+![](man/figures/unnamed-chunk-56-1.png)<!-- -->
 
 The strategy to create geom waterfall follows the standard four steps.
 
@@ -1665,7 +1775,7 @@ last_plot() +
   aes(x = fct_reorder(event, abs(change)))
 ```
 
-<img src="man/figures/unnamed-chunk-53-1.png" width="33%" /><img src="man/figures/unnamed-chunk-53-2.png" width="33%" /><img src="man/figures/unnamed-chunk-53-3.png" width="33%" />
+<img src="man/figures/unnamed-chunk-59-1.png" width="33%" /><img src="man/figures/unnamed-chunk-59-2.png" width="33%" /><img src="man/figures/unnamed-chunk-59-3.png" width="33%" />
 
 The final plot shows that while there are some convenience defaults for
 label and fill, these can be over-ridden.
@@ -1676,7 +1786,7 @@ last_plot() +
   aes(fill = NULL)
 ```
 
-![](man/figures/unnamed-chunk-54-1.png)<!-- -->
+![](man/figures/unnamed-chunk-60-1.png)<!-- -->
 
 # borrowing compute
 
@@ -1696,7 +1806,7 @@ ggplot(data = mtcars) +
 #> `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 ```
 
-![](man/figures/unnamed-chunk-55-1.png)<!-- --> \#\#\# Step 1. compute
+![](man/figures/unnamed-chunk-61-1.png)<!-- --> \#\#\# Step 1. compute
 
 ``` r
 compute_group_smooth_fit <- function(data, scales, method = NULL, formula = NULL,

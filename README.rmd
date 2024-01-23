@@ -287,17 +287,6 @@ cars |>
             vjust = 0)
 ```
 
-Step 0.b But we might like the concise syntax...
-
-```{r, eval = F}
-ggplot(cars) + 
-  aes(x = speed, y = dist) + 
-  geom_point() + 
-  geom_text_coordinate(
-            check_overlap = T,
-            hjust = 0,
-            vjust = 0)
-```
 
 
 ### Step 1: compute
@@ -309,7 +298,10 @@ data |>
     mutate(label = 
              paste0("(", data$x, ", ", data$y, ")"))
 }
+```
 
+
+```{r}
 cars |> 
   rename(x = speed, y = dist) |> 
   compute_group_coordinates() |> 
@@ -385,11 +377,85 @@ last_plot() +
   aes(color = speed > 15)
 ```
 
-## geom_post: **1:1:1** 🚧 *this is a nice example. Add!*
+## geom_post: **1:1:1**
+
+### Step 0. Use base ggplot2
 
 ```{r}
+probs_df = data.frame(outcome = 0:1, 
+       prob = c(.75, .25))
+
+ggplot(data = probs_df) + 
+  aes(x = outcome, y = prob, yend = 0, xend = outcome) + 
+  geom_point() +
+  geom_segment()
+
+```
+
+### Step 1:  Compute
 
 
+```{r}
+compute_group_post <- function(data, scales){
+  
+  data |>
+    dplyr::mutate(xend = x) |>
+    dplyr::mutate(yend = 0)
+  
+}
+```
+
+
+```{r}
+probs_df |>
+  rename(x = outcome, y = prob) |>
+  compute_group_post()
+```
+
+
+### Step 2: Pass to ggproto
+
+```{r}
+StatPost <- ggplot2::ggproto("StatPost",
+                               ggplot2::Stat,
+                               compute_group = compute_group_post,
+                               required_aes = c("x", "y")
+)
+
+```
+
+
+### Step 3: Pass to user-facing function using ggplot2::layer()
+
+```{r}
+geom_post <- function(mapping = NULL, 
+                          data = NULL,
+                          position = "identity", 
+                          na.rm = FALSE, 
+                          show.legend = NA,
+                          inherit.aes = TRUE, ...) {
+
+  ggplot2::layer(
+    stat = StatPost, 
+    geom = ggplot2::GeomSegment, 
+    data = data, 
+    mapping = mapping,
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+
+}
+```
+
+### Step 4: use/test/enjoy
+
+
+```{r}
+ggplot(data = probs_df) + 
+  aes(x = outcome, y = prob) + 
+  geom_post()
 ```
 
 
@@ -574,13 +640,31 @@ last_plot() +
 
 ---
 
-## geom_ggcirclepack: **1:1:n, interdependance**  *new*: defining `compute_panel` in ggproto
+## geom_circlepack: **1:1:n, interdependance**  *new*: defining `compute_panel` in ggproto
 
 *a many-row geom for each row of the input data frame, with interdependence between input observations.*
 
-### Step 0. 🚧 *Add how-to w/ base ggplot2*
+### Step 0. How-to w/ base ggplot2 (and {packcircles})
 
+```{r}
+df_to_plot <- gapminder::gapminder %>%  
+  filter(continent == "Americas") %>%  
+  filter(year == 2002) %>%  
+  select(country, pop)
 
+packed_centers <- packcircles::circleProgressiveLayout(
+  df_to_plot$pop,  sizetype = 'area')  
+
+circle_outlines <- packed_centers %>%  
+  packcircles::circleLayoutVertices(npoints = 50)  
+  
+circle_outlines %>%  
+  ggplot() +  
+  aes(x = x, y = y) +  
+  geom_polygon() +  
+  aes(group = id) + 
+  coord_equal()
+```
 
 
 ### Step 1. Compute 
@@ -589,24 +673,23 @@ last_plot() +
 # Step 1
 compute_panel_circlepack <- function(data, scales){
 
-  data |>
-    mutate(id = row_number()) ->
-    data1
+  data_w_id <- data |>
+    mutate(id = row_number())
 
   if(is.null(data$area)){
 
-    data1 |>
-      mutate(area = 1) ->
-      data1
+    data_w_id <- data_w_id |>
+      mutate(area = 1)
 
   }
 
-  data1 |>
+  data_w_id |>
     pull(area) |>
     packcircles::circleProgressiveLayout(
       sizetype = 'area') |>
     packcircles::circleLayoutVertices(npoints = 50) |>
-    left_join(data1) #|>
+    left_join(data_w_id) |>
+    mutate(group = id)
 
 }
 ```
@@ -617,8 +700,8 @@ compute_panel_circlepack <- function(data, scales){
 StatCirclepack <- ggplot2::ggproto(`_class` = "StatCirclepack",
                                   `_inherit` = ggplot2::Stat,
                                   required_aes = c("id"),
-                                  compute_panel = compute_panel_circlepack,
-                                  default_aes = ggplot2::aes(group = after_stat(id))
+                                  compute_panel = compute_panel_circlepack#,
+                                  # default_aes = ggplot2::aes(group = after_stat(id))
                                   )
 
 ```
@@ -649,11 +732,11 @@ geom_circlepack <- function(mapping = NULL, data = NULL,
 gapminder::gapminder |> 
   filter(year == 2002) |> 
   ggplot() + 
-  aes(id = country, fill = pop/1000000) + 
+  aes(id = country, area = pop/1000000) + 
   geom_circlepack()
 
 last_plot() + 
-  aes(area = pop/1000000) 
+  aes(fill = continent) 
 ```
 
 
@@ -661,8 +744,7 @@ last_plot() +
 
 *a single row in a dataframe: will be visualized by a single mark : the mark will be defined by many-row in an internal dataframe*
 
-for each row in the dataframe, a single geometry is visualized, but each geom is defined by many rows...
-
+*for each row in the dataframe, a single geometry is visualized, but each geom is defined by many rows...*
 
 ```{r, child = "../mytidytuesday/2023-12-27-geom_circle_via_join/geom_circle_via_join.Rmd"}
 
@@ -711,7 +793,8 @@ continental_states_geo_reference
 compute_panel_state <- function(data, scales){
   
   data |> 
-    left_join(continental_states_geo_reference)
+    dplyr::left_join(continental_states_geo_reference) |>
+    dplyr::mutate(group = geometry_group)
   
 }
 ```
@@ -731,9 +814,10 @@ states_characteristics |>
 StatUsstate <- ggplot2::ggproto(`_class` = "StatUsstate",
                                 `_inherit` = ggplot2::Stat,
                                 required_aes = c("state_name"),
-                                compute_panel = compute_panel_state,
-                                default_aes = aes(group =
-                                                    after_stat(geometry_group)))
+                                compute_panel = compute_panel_state#,
+                                #default_aes = aes(group =
+                                                    # after_stat(geometry_group))
+)
 ```
 
 
@@ -865,9 +949,7 @@ compute_panel_county <- function(data, scales){
 StatNcfips <- ggplot2::ggproto(`_class` = "StatNcfips",
                                 `_inherit` = ggplot2::Stat,
                                 required_aes = "fips|county_name",
-                                compute_panel = compute_panel_county,
-                                default_aes = aes(geometry =
-                                                    after_stat(geometry)))
+                                compute_panel = compute_panel_county)
 
 ```
 
