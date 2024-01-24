@@ -32,13 +32,13 @@ In that material, I'll try to stick to a formula to orient you to the ggplot2 ex
 - Step 3: Pass ggproto to a user-facing function for use in a ggplot() pipeline
 - Step 4: Try out/test/enjoy!
 
-We group the content by extension type, provide demonstrations of their use.   Right now, there is a lot of focuses on new geom_* functions. When it comes to excitement about ggplot2 extension packages, new geom_* layers functions really rule the day.  See for example [5 powerful ggplot2 extensions, Rapp 2024](https://albert-rapp.de/posts/ggplot2-tips/20_ggplot_extensions/ggplot_extensions) in which four of the five focus on new geoms that are made available by packages and ['Favorite ggplot2 extensions'](Scherer 2021) slide 38 in C. Scherer's  https://www.cedricscherer.com/slides/RLadiesTunis-2021-favorite-ggplot-extensions.pdf)
+We group the content by extension type, provide demonstrations of their use.   Right now, there is a lot of focuses on new geom_* functions. When it comes to excitement about ggplot2 extension packages, new geom_* layers functions really rule the day.  See for example ['5 powerful ggplot2 extensions', Rapp 2024](https://albert-rapp.de/posts/ggplot2-tips/20_ggplot_extensions/ggplot_extensions) in which four of the five focus on new geoms that are made available by packages and ['Favorite ggplot2 extensions', Scherer 2021](https://www.cedricscherer.com/slides/RLadiesTunis-2021-favorite-ggplot-extensions.pdf) in which almost all of the highlighted extensions are geom_* and stat_* user functions.
 
-Regarding focus on stat_'s vs. geom_'s functions, I take a geom_* -first approach, because they are more commonly used.  I suspect we find geom_* function names to be more concrete descriptions of what the creator envisions for her plot, whereas stat_* function names may feel a be more 'adverbial' and nebulous in their description of rendered output. Consider that ggplot(mtcars, aes(wt, mpg)) + stat_identity() and ggplot(mtcars, aes(wt, mpg)) + geom_point() create identical plots, but later feels much more descriptive of the resultant plot. Between these two options, the preference for the geom_ is evident in the user data; on Github, there are 788 R language files containing 'stat_identity' whereas a staggering 261-thousand R language files contain 'geom_point'.  Of course, stat_* constructions are more flexible and important and the topic is covered later on.
+Regarding focus on stat_'s *versus* geom_'s functions, I take a geom_* -first approach, because they are more commonly used.  I suspect we find geom_* function names to be more concrete descriptions of what the creator envisions for her plot, whereas stat_* function names may feel a be more 'adverbial' and nebulous in their description of rendered output. Consider that ggplot(mtcars, aes(wt, mpg)) + stat_identity() and ggplot(mtcars, aes(wt, mpg)) + geom_point() create identical plots, but later feels much more descriptive of the resultant plot. Between these two options, the preference for the geom_ is evident in the user data; on Github, there are 788 R language files containing 'stat_identity' whereas a staggering 261-thousand R language files contain 'geom_point'.  Of course, stat_* constructions are more flexible and important and the topic is covered later on.
 
 Finally, most of the code is at the 'R for Data Science' level, and not 'Advanced R' level, which hopefully will afford greater reach.  While object oriented programming (OOP) gets top billing in many extension materials, but many folks that *are* fluent in ggplot2 might *not* know much about OOP.  So, I try to see what can be accomplished with little emphasis on OOP and ggroto.  
 
-I think it is important for extenders to recognize that ggplot2 objects are not, of course the rendered plot, but rather a plot specification (of global data, aesthetic mapping, etc) that result from the declarations the user has made. The ggproto OOP mechanism allows users to enter that conversation; making changes to the ggplot2 specification from via their own extensions.  The extension style use here, will look different from what you will in general see in the wild; we make it as concise and high-level as possible (and close to *ignorable* for those put off or nervous about by ggproto methods).  
+I think it is important for extenders to recognize that ggplot2 objects are not, of course the rendered plot, but rather a plot specification (of global data, aesthetic mapping, etc) that result from the declarations the user has made. ggplot2 (+ function()) moves allow users   users to make changes to the plot specification, i.e. the ggplot2 object; and the ggroto system allows changes to the ggplot2 specification from outside the ggplot2 package too - i.e. their own extensions.  The composition of the extension pieces will look different from what you will see in the wild; we make use of the ggproto piece as concise and high-level as possible (and close to *ignorable* for those put off or nervous about by ggproto methods).  
 
 For example defining the object StatCoordinate looks like this: 
 
@@ -53,7 +53,7 @@ StatCoordinate <- ggplot2::ggproto(
 
 Currently, I'm experimenting with a ratio typology that you'll see in the section titles. The idea is to think about how the input data relates to the mark we see on the plot and in turn how the mark's information is stored in the the ggplot2 object. This is really new, and I'm unsure of how productive or precise it can be...
 
-Overall, I think the resources in this ggplot2 extension cookbook are aligned with the findings in ['10 Things Software Developers Should Learn about Learning']( https://cacm.acm.org/magazines/2024/1/278891-10-things-software-developers-should-learn-about-learning/fulltext)
+Overall, I think the resources in this ggplot2 extension cookbook are aligned with the findings in ['10 Things Software Developers Should Learn about Learning']( https://cacm.acm.org/magazines/2024/1/278891-10-things-software-developers-should-learn-about-learning/fulltext), especially the observation that new techniques and ideas are best internalized when applied concrete examples, and then time should be taken to abstract and generalize. 
 
 # Preface and acknowledgements
 
@@ -62,11 +62,11 @@ In January 2020, I attended Thomas Lin Pederson's talk 'Extending your ability t
 I became a regular ggplot2 user in 2017.  I loved how, in general, the syntax was just a simple expression of the core Grammar of Graphics conception of a 'statistical graphic' (i.e. data visualization).
 
 > A data visualization displays 
-1) geometries 
+1) geometric mark
 2) that take on aesthetics (color, size, position, etc) that represent variables 
 3) from a dataset. 
 
-You can learn so much about data via a simple 3-2-1 ggplot2 utterance. And further modifications could be made bit-by-bit,  to arrive at the creator's visual personal preferences.
+You can learn so much about data via a simple 3-2-1, data-mapping-mark ggplot2 utterance. And further modifications could be made bit-by-bit,  to arrive at the creator's visual personal preferences.
 
 All of this closely resembles to how you might sketch out a plot on a notepad or blackboard, or describe your data representation decisions to yourself or a colleague.  As Thomas Lin Pederson has said, 'ggplot2 lets you *speak your plot into existence*'.  And perhaps a little less eloquently by Hadley Wickham's, the ggplot2 author,  "This is what I'm thinking; your the computer, now go and do it!", a paraphrase of the author talking about how he thought data viz *should* feel as a graduate student statistical consultant -- before ggplot2 existed.
 
@@ -262,7 +262,7 @@ This section tackles creating new geom_* layers.  The strategy is to look at com
 
 The section is called *easy* geoms because these geom functions actually inherit much behavior from more primitive geoms like col, text, point, etc..
 
-## geom_text_coordinate: **1:1:1** 
+## geom_text_coordinate: **1:1:1, compute_group, GeomText** 
 
 - for each row in the input dataframe ...
 - we'll perceive a single mark
@@ -394,7 +394,7 @@ last_plot() +
 
 ```
 
-## geom_post: **1:1:1**
+## geom_post: **1:1:1, compute_group, GeomSegment**
 
 ### Step 0. Use base ggplot2
 
@@ -478,10 +478,10 @@ ggplot(data = probs_df) +
 ```
 
 
-### More: combo geoms: lollipop
+### geom_lollipop: Tangential bonus topic: Combining layers into single geom_*() function
 
 
-## geom_xy_means: **n:1:1** 
+## geom_xy_means: **n:1:1, compute_group, GeomPoint** 
 
 *many rows from a dataset: will be summarized and visualized by as single mark: the mark will be defined by one row of data*
 
@@ -562,7 +562,7 @@ last_plot() +
 ```
 
 
-## geom_chull: **N:1:n**
+## geom_chull: **N:1:n, compute_group, GeomPolygon**
 
 This example uses the chull function in R, which 'computes the subset of points which lie on the convex hull of the set of points specified.'  In layman's terms if you had a bunch of nails hammered into a board and put a rubber-band around them, the convex hull would be defined by the subset of nails touching the rubberband. 
 
@@ -663,11 +663,11 @@ last_plot() +
 ---
 
 
-## geom_waterfall: compute_panel!!!!!!!!!!
+## geom_waterfall: **1:1:1, compute_panel, GeomRect**
 
 
 
-## geom_circlepack: **1:1:n, interdependance**  *new*: defining `compute_panel` in ggproto
+## geom_circlepack: **1:1:n, compute_panel, GeomPolygon**
 
 *a many-row geom for each row of the input data frame, with interdependence between input observations.*
 
@@ -771,11 +771,13 @@ last_plot() +
 ```
 
 
-## geom_circle: **1:1:n**, 🚧 *clarify the reason compute_panel is needed*
+## geom_circle: **1:1:n, compute_panel, GeomPolygon**
+
+This next example is the case that TLP took on in his talk, but takes a bit different approach to be more consistent with other approaches in this cookbook.  Essentially, for each row in our data set with defined centers x0 and y0 and radius r, we are joining up 15 rows which then help us build a circle around the x0y0 circle center. 
 
 *a single row in a dataframe: will be visualized by a single mark : the mark will be defined by many-row in an internal dataframe*
 
-*for each row in the dataframe, a single geometry is visualized, but each geom is defined by many rows...*
+*for each row in the dataframe, a single geometry is visualized, but each geometric mark is defined by many rows...*
 
 "../mytidytuesday/2023-12-27-geom_circle_via_join/geom_circle_via_join.Rmd"
 
@@ -785,16 +787,18 @@ last_plot() +
 ```{r}
 library(tidyverse)
 
+n_vertices <- 15
+
 data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |> 
-  mutate(group = row_number()) |> 
-  crossing(tibble(z = 0:15)) |> 
-  mutate(around = 2*pi*z/max(z)) |> 
-  mutate(x = x0 + cos(around)*r,
-         y = y0 + sin(around)*r) |> 
+  mutate(input_data_row_id = row_number()) |> 
+  crossing(tibble(vertex_id = 0:n_vertices)) |> 
+  mutate(angle = 2*pi*vertex_id/max(vertex_id)) |> 
+  mutate(x = x0 + cos(angle)*r,
+         y = y0 + sin(angle)*r) |> 
   ggplot() + 
-  aes(x, y, label = z) +
-  geom_text() +
-  geom_path(aes(group = group))
+  aes(x, y) +
+  geom_path(aes(group = input_data_row_id)) +
+  geom_text(aes( label = vertex_id))
 ```
 
 
@@ -806,10 +810,10 @@ compute_panel_circle <- function(data, scales, n_vertices = 15){
   
   data |> 
     mutate(group = row_number()) |> 
-    crossing(tibble(z = 0:n_vertices)) |>
-    mutate(around = 2*pi*z/max(z)) |> 
-    mutate(x = x0 + cos(around)*r,
-           y = y0 + sin(around)*r) 
+    crossing(tibble(vertex_id = 0:n_vertices)) |>
+    mutate(angle_in_circle = 2*pi*vertex_id/max(vertex_id)) |> 
+    mutate(x = x0 + cos(angle_in_circle)*r,
+           y = y0 + sin(angle_in_circle)*r) 
   
 }
 
@@ -858,7 +862,9 @@ geom_circle <- function(
 
 
 ```{r}
-data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |> 
+data.frame(x0 = 0:1, 
+           y0 = 0:1, 
+           r = 1:2/3) |> 
   ggplot() + 
   aes(x0 = x0, y0 = y0, r = r) + 
   geom_circle(color = "red",
@@ -868,7 +874,9 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |>
 diamonds |> 
   slice_sample(n = 80) |> 
   ggplot() + 
-  aes(x0 = as.numeric(cut), y0 = carat, r = as.numeric(clarity)/20) + 
+  aes(x0 = as.numeric(cut), 
+      y0 = carat, 
+      r = as.numeric(clarity)/20) + 
   geom_circle(alpha = .2, n_vertices = 5) + 
   aes(fill = after_stat(r)) +
   coord_equal()
@@ -953,7 +961,7 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3, rotation = 0) %>%
 ```
 
 
-## geom_state: **1:1:n**
+## geom_state: **1:1:n, compute_panel, GeomPolygon**
 
 
 ### Step 0:  use base ggplot2
@@ -1077,13 +1085,27 @@ ggplot(data = states_characteristics) +
 
 
 
-## geom_county: **1:1:1 sfc_MULTIPOLYGON**
+## geom_county: **1:1:1, compute_panel, GeomSf**
 
 *a geom defined by an sf geometry column*
 
-### Step 0.
+### Step 0. get it done in base ggplot2
+
+Similar to our U.S. states example, where the state name is the 
+
+```{r, include = F}
+library(tidyverse)
+ggnorthcarolina::northcarolina_county_flat |>
+  select(fips, county_name, BIR79) ->
+nc_county_info
+```
+
 
 ```{r}
+# data to visualize
+nc_county_info |> head()
+
+# find a dataset with geographic info
 nc_geo_reference <- sf::st_read(system.file("shape/nc.shp", package="sf")) |> 
   select(NAME, FIPS, FIPSNO, geometry)
 
@@ -1100,40 +1122,42 @@ nc_geo_reference |>
 
 #### Prestep. Prepare reference sf dataframe
 
+Our objective is similar to the geom_state() construction that uses a reference dataframe that contains the latitudes and longitudes of the state perimeters in the compute step; the reference data is joined up via the state_name required aesthetic. Then we inherit geom behavior from GeomPolygon.
+
+The sf layer approach is similar.  Instead of adding many rows of data for each locality with longitude and latitude coordinates, however, the geometry list-column will be added in the compute step.  
+
+If we inspect the layer data for the choropleth created with base ggplot2, we see the geometry column and fill which will be familiar to you if you've done any work with geom_sf().  However, you'll also note the xmin, xmax, ymin, and ymax columns.  These are also needed for our reference data.  
+
+So... This is my question to the ggplot2 and spatial folks.  Below, I have a routine for adding these xmin ymin etc columns.  Do you have a better one?  Perhaps something that uses a ggplot2 sf internal function? 
 
 ```{r}
-#### 1, create sf reference dataframe w xmin, ymin, xmax and ymax using return_st_bbox_df function
+last_plot() |> layer_data() |> head()
+
+
+```
+
+```{r}
+
+### 1, create sf reference dataframe w xmin, ymin, xmax and ymax using return_st_bbox_df function
 return_st_bbox_df <- function(sf_df){
 
   data.frame(xmin = sf::st_bbox(sf_df)[1],
-             xmax = sf::st_bbox(sf_df)[2],
-             ymin = sf::st_bbox(sf_df)[3],
+             ymin = sf::st_bbox(sf_df)[2],
+             xmax = sf::st_bbox(sf_df)[3],
              ymax = sf::st_bbox(sf_df)[4])
 
 }
 
-northcarolina_county_reference <- 
+northcarolina_county_reference <-
   sf::st_read(system.file("shape/nc.shp", package="sf")) |>
   dplyr::rename(county_name = NAME,
                 fips = FIPS) |>
   dplyr::select(county_name, fips, geometry) |>
   dplyr::mutate(bb =
-                  purrr::map(geometry, 
+                  purrr::map(geometry,
                              return_st_bbox_df)) |>
   tidyr::unnest(bb) |>
   data.frame()
-
-head(northcarolina_county_reference)
-str(northcarolina_county_reference)
-
-sf::st_read(system.file("shape/nc.shp", package="sf")) |>
-  rename(county_name = NAME, fips = FIPS) |>
-  ggnc::create_geometries_reference(id_cols = c(county_name, fips)) ->
-northcarolina_county_reference
-
-head(northcarolina_county_reference)
-str(northcarolina_county_reference)
-
 ```
 
 #### Compute Step using reference data
@@ -1219,13 +1243,19 @@ last_plot() +
 ```{r}
 ```
 
-## geom_pie: **n -> 1:1:1**
+<!-- ## geom_pie: **n -> 1:1:1** -->
 
-```{r}
-code = readlines_wo_roxygen("../ggwedge/R/compute_panel_pie.R")
-```
+<!-- ```{r} -->
+<!-- code = readlines_wo_roxygen("../ggwedge/R/compute_panel_pie.R") -->
+<!-- ``` -->
 
-## geom_wedge: **n -> 1:1:n**
+<!-- ## geom_wedge: **n -> 1:1:n** -->
+
+
+
+
+
+
 
 
 
@@ -1234,7 +1264,7 @@ code = readlines_wo_roxygen("../ggwedge/R/compute_panel_pie.R")
 # stat_* layers: keeping flexible via stat_* functions
 
 
-## stat_chull 
+## stat_chull: **N:1:n; compute_group; GeomPolygon, GeomText, GeomPoint**
 
 Rather than defining geom functions, you might instead write stat_* functions which can be used with a variety of geoms.  Let's contrast geom_chull and stat_chull below.
 
@@ -1309,7 +1339,7 @@ p +
              hjust = 0)
 ```
 
-## stat_waterfall: **1:1:1; interdependence**
+## stat_waterfall: **1:1:1; compute_panel; GeomRect, GeomText**
 
 Because the stat_* functions might require more cognitively from the user, aliasing might be a good idea, creating one or more geoms_* the stat layer.
 
@@ -1397,8 +1427,13 @@ last_plot() +
 ```
 
 
-# borrowing compute
+# Piggyback on compute  
 
+## Some Delayed Aesthetic Evaluation
+
+
+
+## Borrowing compute
 
 ## geom_smoothfit: **1:1:1** ggproto piggybacking on compute...
 
@@ -1406,11 +1441,11 @@ n:1:80 is geom_smooth default.
 
 
 ```{r}
-ggplot(data = mtcars) + 
-  aes(x = wt, y = mpg) + 
-  geom_point() + 
+ggplot(data = mtcars) +
+  aes(x = wt, y = mpg) +
+  geom_point() +
   geom_smooth() +
-  stat_smooth(xseq = mtcars$wt, 
+  stat_smooth(xseq = mtcars$wt,
               geom = "point",
               color = "blue")
 ```
@@ -1437,27 +1472,7 @@ ggplot(data = mtcars) +
 ```
 
 
-
-
-# modified start points; ggverbatim(), 
-
-## ggverbatim()
-
-```{r, code = readlines_wo_roxygen("../ggverbatim/R/ggverbatim.R")}
-
-readlines_wo_roxygen("../ggverbatim/R/ggverbatim.R")
-```
-
-
-
-
-
-# ggedgelist()
-
-```{r, code = readlines_wo_roxygen("../ggedgelist/R/ggedgelist.R")}
-```
-
-
+# facet_sample
 
 
 # theme_chalkboard()
@@ -1494,12 +1509,12 @@ theme_chalkboard_slate <- function(){
 ```
 
 ```{r}
-ggplot(data = cars) + 
-  aes(x = speed, dist) + 
-  geom_point() + 
+ggplot(data = cars) +
+  aes(x = speed, dist) +
+  geom_point() +
   theme_chalkboard()
 
-last_plot() + 
+last_plot() +
   theme_chalkboard_slate()
 
 ```
@@ -1531,6 +1546,31 @@ geoms_chalk_on()
 
 last_plot()
 ```
+
+
+
+# modified start points; ggverbatim(),
+
+## ggverbatim()
+
+```{r, code = readlines_wo_roxygen("../ggverbatim/R/ggverbatim.R")}
+
+readlines_wo_roxygen("../ggverbatim/R/ggverbatim.R")
+```
+
+
+
+
+
+# ggedgelist()
+
+```{r, code = readlines_wo_roxygen("../ggedgelist/R/ggedgelist.R")}
+```
+
+
+
+
+
 
 ## ggscatterplot(), rearrangement
 
