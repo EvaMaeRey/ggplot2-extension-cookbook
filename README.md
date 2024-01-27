@@ -162,10 +162,12 @@ ggplot2 extension, so even if a few details seem confusing, you’ll know
   - Step 4: Try out/test/enjoy\!
 
 We group the content by extension type, provide demonstrations of their
-use. Right now, there is a lot of focuses on new geom\_\* functions. I
-think this is an important area to illuminate. When it comes to
-excitement about ggplot2 extension packages, new geom\_\* layers
-functions really rule the day. See for example [‘5 powerful ggplot2
+use. Right now, there is a lot of focuses on new geom\_\* and stat\_\*
+layer functions. I think this is an important area to illuminate because
+many of these allow us to pass off routine computational task to the
+plotting system. This importance translates to excitement about ggplot2
+extension packages: new geom\_\* layers functions really rule the day
+when it comes to outside interest. See for example [‘5 powerful ggplot2
 extensions’, Rapp
 2024](https://albert-rapp.de/posts/ggplot2-tips/20_ggplot_extensions/ggplot_extensions)
 in which four of the five focus on new geoms that are made available by
@@ -175,39 +177,44 @@ in which almost all of the highlighted extensions are geom\_\* and
 stat\_\* user-facing functions.
 
 Regarding focus on stat\_‘s *versus* geom\_’s functions, I take a
-geom\_\* -first approach, because they are more commonly used in
-layman’s ggplot builds. I suspect we find geom\_\* functions to be
+geom\_\* -first approach, because these functions are more commonly used
+in layman’s ggplot builds. I suspect we find geom\_\* functions to be
 more concrete descriptions of what the creator envisions for her plot,
 whereas stat\_\* function names may feel a be more ’adverbial’ and
 nebulous in their description of rendered output. Consider that
 ggplot(mtcars, aes(wt, mpg)) + stat\_identity() and ggplot(mtcars,
-aes(wt, mpg)) + geom\_point() create identical plots, but later feels
-like a more intuitive description of the resultant plot. Between these
-two options, the preference for the geom\_ is evident in the user data;
-on Github, there are 788 R language files containing ‘stat\_identity’
-whereas a staggering 261-thousand R language files contain
-‘geom\_point’. Of course, stat\_\* constructions are quite flexible
-and expressive, and therefore the topic is of course covered.
+aes(wt, mpg)) + geom\_point() create identical plots, but later seems
+much more descriptive of the resultant plot. Between these two
+particular options, the preference for the geom\_point is evident in the
+user data; on Github, there are 788 R language files containing
+‘stat\_identity’ whereas a staggering 261-thousand R language files
+contain ‘geom\_point’. Of course, stat\_\* constructions are quite
+flexible and expressive, and more seasoned ggplot2 users use them with
+great fluency, and therefore the topic is covered.
 
 Finally, most of the code is at the ‘R for Data Science’ level, and not
-‘Advanced R’ level, which hopefully will afford greater reach. While
+‘Advanced R’ level, which I hope will afford greater reach. While
 object oriented programming (OOP) gets top billing in many extension
-materials, but many folks that *are* fluent in ggplot2 might *not* know
-much about OOP. So, I try to see what can be accomplished with little
-emphasis on OOP and ggroto.
+materials, but many folks that *are* expert users of ggplot2 might *not*
+know much about OOP. I see what can be accomplished with little emphasis
+on OOP and ggroto.
 
-I think it is important for extenders to recognize that ggplot2 objects
-are not, of course the rendered plot, but rather a plot specification
-(of global data, aesthetic mapping, etc) that result from the
-declarations the user has made. The ggplot plot building syntax allows
-users to make changes to the overall plot specification incrementally In
-other words the `+` operator allows us to modify the the ggplot2 object.
-And the ggroto system allows changes to the ggplot2 specification from
-outside the ggplot2 package too — from extension packages. The
-composition of the extension pieces will look different from what you
-will see in the wild to make definition of the ggproto objects as
-concise and high-level as possible — and close to *ignorable* for those
-put off or nervous about OOP methods.
+Reader, I do think it is important for you to recognize that ggplot2
+objects are not, of course the rendered plot, but rather a plot
+specification (of global data, aesthetic mapping, etc) that result from
+the declarations the user has made. But I think you’ve probably made
+this realization very early on in your ggplot2 journey already. You know
+that the ggplot plot building syntax allows users to make changes to the
+overall plot *specification* incrementally. In other words the `+`
+operator allows us to modify the the ggplot2 object. And the ggroto
+system allows changes to the ggplot2 specification from outside the
+ggplot2 package too — from extension packages.
+
+For those who have dipped your toes into extension, the composition of
+the extension elements will look different from what you will see in the
+wild. Specifically, I try to define ggproto objects in as concise and
+high-level a way as possible — and as close to *ignorable* for those put
+off or nervous about OOP methods.
 
 For example defining the object StatCoordinate looks like this:
 
@@ -220,19 +227,20 @@ StatCoordinate <- ggplot2::ggproto(
   )
 ```
 
-Currently, I’m experimenting with a ratio typology that you’ll see in
-the section titles. The idea is to think about how the input data
-relates to the mark we see on the plot and in turn how the mark’s
-information is stored in the the ggplot2 object. This is really new, and
-I’m unsure of how productive or precise it can be…
+Currently, with the geom\_\* and stat\_\* layers, I’m experimenting with
+a ratio typology that you’ll see in the section titles. The idea is to
+think about how the input data relates to the mark we see on the plot
+and in turn how the mark’s information is stored in the ggplot2 object.
+This is a brand new undertaking, and I’m unsure of how productive or
+precise it will be.
 
 Overall, I think the resources in this ggplot2 extension cookbook are
 aligned with the findings in [‘10 Things Software Developers Should
 Learn about
 Learning’](https://cacm.acm.org/magazines/2024/1/278891-10-things-software-developers-should-learn-about-learning/fulltext),
-especially the observation that new techniques and ideas are best
+especially the observation that new techniques and ideas are often best
 internalized when first applied to concrete examples; general principles
-will be more successful if .
+may be more grounded if situated in relevant examples.
 
 # Preface and acknowledgements
 
@@ -253,10 +261,10 @@ conception of a ‘statistical graphic’ (i.e. data visualization).
 > aesthetics (color, size, position, etc) that represent variables 3)
 > from a dataset.
 
-You can learn so much about data via a simple 3-2-1, data-mapping-mark
-ggplot2 utterance. And further modifications could be made bit-by-bit,
-to completely taylor the plot to the creator’s visual personal
-preferences.
+You can learn so much about data via a simple 3-2-1 — data-mapping-mark
+— ggplot2 utterance. And further modifications could be made
+bit-by-bit, too, to completely tailor the plot to the creator’s visual
+personal preferences.
 
 All of this closely resembles to how you might sketch out a plot on a
 notepad or blackboard, or describe your data representation decisions to
@@ -267,44 +275,44 @@ thinking; your the computer, now go and do it\!”, a paraphrase of the
 author talking about how he thought data viz *should* feel as a graduate
 student statistical consultant – before ggplot2 existed.
 
-But there were admittidly pain points when using ‘base’ ggplot2; for me,
-this was mostly when a geom didn’t exist for doing some compute in the
-background, and I would need this compute done over and over. It would
-be a slough to the compute for a bunch of subsets of interest upstream
-to the plotting environment. This pre-computation problem felt
-manageable in classroom setting that I found myself in through early in
-my data career but when I moved to a primarily analytic role (West
-Point, Fall 2020) — where the volume of analysis was simply higher and
-turn around times faster — I felt the problem much more acutely.
-(Overnight, I went from weak preference for geom\_col - to strong
-preference for geom\_bar\!) Extension seemed to offer the solution to
-the problem, and I was more motivated than ever to figure extension out
-in my analyst role.
+But there were admittedly pain points when using ‘base’ ggplot2; for me,
+this was mostly when a geom\_\* function didn’t exist for doing some
+compute in the background, and I would need such compute done over and
+over. It would be a slough to work on the compute for a bunch of subsets
+of the data upstream to the plotting environment. This pre-computation
+problem felt manageable in an academic and classroom setting that I
+found myself in through early in my data career but when I moved to a
+primarily analytic role (West Point, Fall 2020) — where the volume of
+analysis was simply higher and turn around times faster — I felt the
+problem much more acutely. (Overnight, I went from weak preference for
+geom\_col - to strong preference for geom\_bar\!) Extension seemed to
+offer the solution to the problem, and I was more motivated than ever to
+figure extension out in my analyst role.
 
 I experienced about a year of failure and frustration when first
 entering the extension space. If I weren’t so convinced of the
 efficiency gains that it would eventually yield and the elegance of
 extension, I’d likely have given up. Looking back and recognizing the
-substantial hurdles for even long time R and ggplot2 users, I think
-there is space for more ggplot2 extension reference materials like this
-*ggplot2 Extension Cookbook*.
+substantial hurdles for even long time R and ggplot2 users, as I was, I
+think there is space for more ggplot2 extension reference materials like
+this *ggplot2 Extension Cookbook*.
 
 I’m grateful for several experiences and the efforts of others that have
 refined my thinking about what will work for newcomers to extension
-First, just after getting my own feet wet in extension, I had the chance
-to work on extension with underclassmen undergraduate students in the
+First, after just getting my own feet wet in extension, I had the chance
+to work on extension with underclassmen, undergraduate students in the
 context of their independent studies. Our focus was the same type of
 extension that Pederson demonstrated – a geom\_\* function that used a
 Stat to do some computational work, and then inherit the rest of its
 behavior from a more primitive geom.
 
-Working with students meant that I got to think about and more carefully
-formulate a workflow; how would we build up skills and ideas in way that
-would be accessible to very new R and ggplot2 users. As veterans of just
-one or two stats classes that used R and ggplot2, what would these
-students they find familiar and accessible? What might we be able to
-de-emphasize? ggproto and object oriented programming hadn’t been
-touched in coursework. Could we still still succeed with extension?
+Working with new-to-R students meant that I got to reflect on workflow
+and revise and reformulateit; how would we build up skills and ideas in
+way that would be accessible to *very* new R and ggplot2 users. As
+veterans of just one or two stats classes that used R and ggplot2, what
+would these students they find familiar and accessible? What might we be
+able to de-emphasize? ggproto and object oriented programming hadn’t
+been touched in coursework. Could we still still succeed with extension?
 
 The following steps emerged:
 
@@ -319,20 +327,12 @@ was very impressed with what the students were able to accomplish during
 a single semester.
 
 And I also wondered how the strategy would perform with experienced R
-and ggplot2 users. Being an academic, I wanted to assess further and I
-went down the route of devising a tutorial \[with assistance from
+and ggplot2 users. Curious, I created a tutorial \[with assistance from
 independent study student Morgan Brown, who continued to work with me
-for a second semester\] and formally getting feedback on it via focus
-groups and a survey, after refining the tutorial.
-
-I did some research on ggplot2 extension among ggplot2 and R ‘super
-users’ and have found that the perhaps this community is under-served
-with regard to extension, but with the right materials, more folks could
-join the extenders ranks.
-
-I fielded ‘Easy geom Recipes’ with a group of statistics educators,
-conducting a survey on the resource and also getting feedback via a
-focus group.
+for a second semester\] called ‘Easy-Geom-Recipes’ formally got feedback
+on it via focus groups and a survey, after refining the tutorial, with a
+small group of stats educator which we might term ggplot and R super
+users given their frequency and length of use of these materials.
 
 Among my favorite quotation from the focus groups is something that
 validated the efforts but also challenged me:
@@ -350,10 +350,6 @@ easy-geom-recipes](https://github.com/EvaMaeRey/easy-geom-recipes) was
 collected in March 2023. I presented on the outcomes at the ASA Chapter
 meeting of COWY, [‘A New Wave of ggplot2
 Extenders’](https://evamaerey.github.io/mytidytuesday/2023-09-26-cowy-outline/cowy-slides.html#1).
-
-To try to make those experiences valuable to others, I follow the
-‘recipe’ formula as much as possible so that as strategies morph, one
-still recognizes ‘where we are’ at a high-level in the process.
 
 After presenting on the success of ‘easy geom recipes’, I felt I was at
 a crossroads. I could either focus on packaging my material as
@@ -374,10 +370,6 @@ like `child = '../my_gg_experiments/my_extension_ideas.'` and `code =
 '../ggwaterfall/R/geom_waterfall'.` It is a great help not to have to
 pull up files and copy and paste. I’m very grateful to Yihui Xie for his
 insights and efforts at making this possible.
-
-At present, I’ll just show examples of functionality, and then link to
-the READMEs for further investigation of the specific recipes/strategies
-used.
 
 I’m personally grateful to other ggplot2 extenders and R enthusiasts
 that have supported this journey.
