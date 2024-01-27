@@ -8,7 +8,7 @@
       - [geom\_text\_coordinate: **1:1:1, compute\_group,
         GeomText**](#geom_text_coordinate-111-compute_group-geomtext)
           - [Step 0: use base ggplot2](#step-0-use-base-ggplot2)
-          - [Step 1: compute](#step-1-compute)
+          - [Step 1: Compute](#step-1-compute)
           - [Step 2: pass to ggproto
             object](#step-2-pass-to-ggproto-object)
           - [Step 3. Write user facing
@@ -46,6 +46,13 @@
           - [Step 4. Try out/test/ enjoy](#step-4-try-outtest-enjoy)
       - [geom\_waterfall: **1:1:1, compute\_panel,
         GeomRect**](#geom_waterfall-111-compute_panel-geomrect)
+          - [Step 0](#step-0)
+          - [Steps 1](#steps-1)
+          - [Step 2](#step-2)
+          - [Step 3](#step-3)
+          - [Step 4](#step-4)
+          - [Bonus: default `aes` using delayed aesthetic evaluation
+            (D.A.E.)](#bonus-default-aes-using-delayed-aesthetic-evaluation-dae)
       - [geom\_circlepack: **1:1:n, compute\_panel,
         GeomPolygon**](#geom_circlepack-11n-compute_panel-geompolygon)
           - [Step 0. How-to w/ base ggplot2 (and
@@ -85,9 +92,7 @@
         GeomSf**](#geom_county-111-compute_panel-geomsf)
           - [Step 0. get it done in base
             ggplot2](#step-0-get-it-done-in-base-ggplot2)
-          - [Step 1. compute 🚧 *want to see if xmin, xmax columns can be
-            added within compute using ggplot2
-            function*](#step-1-compute--want-to-see-if-xmin-xmax-columns-can-be-added-within-compute-using-ggplot2-function)
+          - [Step 1. compute](#step-1-compute-5)
           - [Step 2. pass to ggproto
             object](#step-2-pass-to-ggproto-object-2)
           - [Step 3. pass to user-facing function (wrapping
@@ -104,21 +109,20 @@
         GeomPoint**](#stat_chull-n1n-compute_group-geompolygon-geomtext-geompoint)
       - [stat\_waterfall: **1:1:1; compute\_panel; GeomRect,
         GeomText**](#stat_waterfall-111-compute_panel-geomrect-geomtext)
-          - [Step 0](#step-0)
-          - [Steps 1 and 2](#steps-1-and-2)
-          - [Step 3](#step-3)
-          - [Step 4](#step-4)
-  - [Piggyback as much as possible:](#piggyback-as-much-as-possible)
+      - [Bonus part 2. DAE with GeomText
+        target](#bonus-part-2-dae-with-geomtext-target)
+  - [Piggyback on compute](#piggyback-on-compute)
       - [Some Delayed Aesthetic
         Evaluation](#some-delayed-aesthetic-evaluation)
       - [Borrowing compute](#borrowing-compute)
       - [geom\_smoothfit: **1:1:1** ggproto piggybacking on
         compute…](#geom_smoothfit-111-ggproto-piggybacking-on-compute)
-          - [Step 2](#step-2)
+          - [Step 2](#step-2-1)
           - [Step 3](#step-3-1)
   - [add default aesthetics](#add-default-aesthetics)
       - [geom\_barlab: Adding defaults to existing stats via ggproto
         editing](#geom_barlab-adding-defaults-to-existing-stats-via-ggproto-editing)
+  - [facet\_sample](#facet_sample)
   - [theme\_chalkboard()](#theme_chalkboard)
   - [modified start points;
     ggverbatim(),](#modified-start-points-ggverbatim)
@@ -140,13 +144,14 @@
 
 This *ggplot2 Extension Cookbook* aims to provide ggplot2 some extension
 strategies in a consistent and accessible way. The target audience is
-fluent users of ggplot2 and R, who haven’t yet entered the extension
-space. The intent is to provide a lot of examples of extensions to read
-to grow familiarity and confidence, and also to serve as a reference for
-actually building extensions.
+fluent users of ggplot2 and R who have not yet entered the extension
+space. The main tactic is to provide many extensions examples for
+building familiarity and confidence, and also which might serve as
+specific reference when readers are inspired to build their own
+extensions.
 
 In that material, I’ll try to stick to a formula to orient you to the
-ggplot2 extension, so even if the details seem confusing, you’ll know
+ggplot2 extension, so even if a few details seem confusing, you’ll know
 ‘where’ you are at a higher level:
 
   - Step 0: get job done with ‘base’ ggplot2
@@ -157,30 +162,32 @@ ggplot2 extension, so even if the details seem confusing, you’ll know
   - Step 4: Try out/test/enjoy\!
 
 We group the content by extension type, provide demonstrations of their
-use. Right now, there is a lot of focuses on new geom\_\* functions.
-When it comes to excitement about ggplot2 extension packages, new
-geom\_\* layers functions really rule the day. See for example [‘5
-powerful ggplot2 extensions’, Rapp
+use. Right now, there is a lot of focuses on new geom\_\* functions. I
+think this is an important area to illuminate. When it comes to
+excitement about ggplot2 extension packages, new geom\_\* layers
+functions really rule the day. See for example [‘5 powerful ggplot2
+extensions’, Rapp
 2024](https://albert-rapp.de/posts/ggplot2-tips/20_ggplot_extensions/ggplot_extensions)
 in which four of the five focus on new geoms that are made available by
 packages and [‘Favorite ggplot2 extensions’, Scherer
 2021](https://www.cedricscherer.com/slides/RLadiesTunis-2021-favorite-ggplot-extensions.pdf)
 in which almost all of the highlighted extensions are geom\_\* and
-stat\_\* user functions.
+stat\_\* user-facing functions.
 
 Regarding focus on stat\_‘s *versus* geom\_’s functions, I take a
-geom\_\* -first approach, because they are more commonly used. I suspect
-we find geom\_\* function names to be more concrete descriptions of what
-the creator envisions for her plot, whereas stat\_\* function names may
-feel a be more ’adverbial’ and nebulous in their description of rendered
-output. Consider that ggplot(mtcars, aes(wt, mpg)) + stat\_identity()
-and ggplot(mtcars, aes(wt, mpg)) + geom\_point() create identical plots,
-but later feels much more descriptive of the resultant plot. Between
-these two options, the preference for the geom\_ is evident in the user
-data; on Github, there are 788 R language files containing
-‘stat\_identity’ whereas a staggering 261-thousand R language files
-contain ‘geom\_point’. Of course, stat\_\* constructions are more
-flexible and important and the topic is covered later on.
+geom\_\* -first approach, because they are more commonly used in
+layman’s ggplot builds. I suspect we find geom\_\* functions to be
+more concrete descriptions of what the creator envisions for her plot,
+whereas stat\_\* function names may feel a be more ’adverbial’ and
+nebulous in their description of rendered output. Consider that
+ggplot(mtcars, aes(wt, mpg)) + stat\_identity() and ggplot(mtcars,
+aes(wt, mpg)) + geom\_point() create identical plots, but later feels
+like a more intuitive description of the resultant plot. Between these
+two options, the preference for the geom\_ is evident in the user data;
+on Github, there are 788 R language files containing ‘stat\_identity’
+whereas a staggering 261-thousand R language files contain
+‘geom\_point’. Of course, stat\_\* constructions are quite flexible
+and expressive, and therefore the topic is of course covered.
 
 Finally, most of the code is at the ‘R for Data Science’ level, and not
 ‘Advanced R’ level, which hopefully will afford greater reach. While
@@ -192,14 +199,15 @@ emphasis on OOP and ggroto.
 I think it is important for extenders to recognize that ggplot2 objects
 are not, of course the rendered plot, but rather a plot specification
 (of global data, aesthetic mapping, etc) that result from the
-declarations the user has made. ggplot2 (+ function()) moves allow users
-users to make changes to the plot specification, i.e. the ggplot2
-object; and the ggroto system allows changes to the ggplot2
-specification from outside the ggplot2 package too - i.e. their own
-extensions. The composition of the extension pieces will look different
-from what you will see in the wild; we make use of the ggproto piece as
-concise and high-level as possible (and close to *ignorable* for those
-put off or nervous about by ggproto methods).
+declarations the user has made. The ggplot plot building syntax allows
+users to make changes to the overall plot specification incrementally In
+other words the `+` operator allows us to modify the the ggplot2 object.
+And the ggroto system allows changes to the ggplot2 specification from
+outside the ggplot2 package too — from extension packages. The
+composition of the extension pieces will look different from what you
+will see in the wild to make definition of the ggproto objects as
+concise and high-level as possible — and close to *ignorable* for those
+put off or nervous about OOP methods.
 
 For example defining the object StatCoordinate looks like this:
 
@@ -223,8 +231,8 @@ aligned with the findings in [‘10 Things Software Developers Should
 Learn about
 Learning’](https://cacm.acm.org/magazines/2024/1/278891-10-things-software-developers-should-learn-about-learning/fulltext),
 especially the observation that new techniques and ideas are best
-internalized when applied concrete examples, and then time should be
-taken to abstract and generalize.
+internalized when first applied to concrete examples; general principles
+will be more successful if .
 
 # Preface and acknowledgements
 
@@ -233,9 +241,9 @@ ability to extend ggplot2’ seated on the floor of a packed out ballroom.
 The talk had the important central message - “you can be a ggplot2
 extender”. And since then, I wanted to be in that cool-kid extender
 club. Four years later, I’m at a point where I can start claiming that
-identity. I hope that this *ggplot2 Extension Cookbook* will help along
-you on your extender journey and, especially if you are fluent in R and
-ggplot2, it says to you “you can be a ggplot2 extender”.
+club membership. I hope that this *ggplot2 Extension Cookbook* will help
+along you on your extender journey and, especially if you are fluent in
+R and ggplot2, it says to you “you can be a ggplot2 extender”.
 
 I became a regular ggplot2 user in 2017. I loved how, in general, the
 syntax was just a simple expression of the core Grammar of Graphics
@@ -247,7 +255,8 @@ conception of a ‘statistical graphic’ (i.e. data visualization).
 
 You can learn so much about data via a simple 3-2-1, data-mapping-mark
 ggplot2 utterance. And further modifications could be made bit-by-bit,
-to arrive at the creator’s visual personal preferences.
+to completely taylor the plot to the creator’s visual personal
+preferences.
 
 All of this closely resembles to how you might sketch out a plot on a
 notepad or blackboard, or describe your data representation decisions to
@@ -258,42 +267,44 @@ thinking; your the computer, now go and do it\!”, a paraphrase of the
 author talking about how he thought data viz *should* feel as a graduate
 student statistical consultant – before ggplot2 existed.
 
-But there were pain points when using ‘base’ ggplot2; for me, this was
-mostly when a geom didn’t exist for doing some compute in the
-background, and needing compute done over and over. It would be a slough
-to the compute for a bunch of subsets of interest upstream to the
-plotting environment. This pre-computation problem felt manageable in
-classroom setting that I found myself in through early 2020 but when I
-moved to a primarily analytic role at West Point — where the volume of
-analysis was simply higher and turn around times faster — I felt the
-problem much more acutely. (Overnight, I went from weak preference for
-geom\_col - to strong preference for geom\_bar\!) Extension seemed to
-offer the solution to the problem, and I was more motivated than ever to
-break in to it in my analyst role.
+But there were admittidly pain points when using ‘base’ ggplot2; for me,
+this was mostly when a geom didn’t exist for doing some compute in the
+background, and I would need this compute done over and over. It would
+be a slough to the compute for a bunch of subsets of interest upstream
+to the plotting environment. This pre-computation problem felt
+manageable in classroom setting that I found myself in through early in
+my data career but when I moved to a primarily analytic role (West
+Point, Fall 2020) — where the volume of analysis was simply higher and
+turn around times faster — I felt the problem much more acutely.
+(Overnight, I went from weak preference for geom\_col - to strong
+preference for geom\_bar\!) Extension seemed to offer the solution to
+the problem, and I was more motivated than ever to figure extension out
+in my analyst role.
 
 I experienced about a year of failure and frustration when first
 entering the extension space. If I weren’t so convinced of the
 efficiency gains that it would eventually yield and the elegance of
-extension, I’d likely have given up. Recognizing the substantial hurdles
-for even long time R and ggplot2 users, I think there is space for more
-ggplot2 extension reference materials, such as the recipes in the
+extension, I’d likely have given up. Looking back and recognizing the
+substantial hurdles for even long time R and ggplot2 users, I think
+there is space for more ggplot2 extension reference materials like this
 *ggplot2 Extension Cookbook*.
 
 I’m grateful for several experiences and the efforts of others that have
-refined these materials. First, just after getting my own feet wet in
-extension, I had the chance to work on extension with students in the
+refined my thinking about what will work for newcomers to extension
+First, just after getting my own feet wet in extension, I had the chance
+to work on extension with underclassmen undergraduate students in the
 context of their independent studies. Our focus was the same type of
 extension that Pederson demonstrated – a geom\_\* function that used a
-Stat to do some computational work, and then inherited the rest of its
+Stat to do some computational work, and then inherit the rest of its
 behavior from a more primitive geom.
 
-Working with first and second year undergrad students meant that I got
-to think about and formulate workflow; how would we build up skills and
-ideas in way that would be accessibility to rather new R and ggplot2
-users. As veterans of just one or two stats classes that used R and
-ggplot2, what would they find familiar and accessible? What might we be
-able to de-emphasize? ggproto and OOP in R hadn’t been touched in
-coursework. Could we still still succeed with extension?
+Working with students meant that I got to think about and more carefully
+formulate a workflow; how would we build up skills and ideas in way that
+would be accessible to very new R and ggplot2 users. As veterans of just
+one or two stats classes that used R and ggplot2, what would these
+students they find familiar and accessible? What might we be able to
+de-emphasize? ggproto and object oriented programming hadn’t been
+touched in coursework. Could we still still succeed with extension?
 
 The following steps emerged:
 
@@ -315,11 +326,11 @@ for a second semester\] and formally getting feedback on it via focus
 groups and a survey, after refining the tutorial.
 
 I did some research on ggplot2 extension among ggplot2 and R ‘super
-users’ and have found that the perhaps this community is under-served,
-but with the right materials, more folks could get into ggplot2
-extension.
+users’ and have found that the perhaps this community is under-served
+with regard to extension, but with the right materials, more folks could
+join the extenders ranks.
 
-I fielded ‘easy geom recipes’ with a group of statistics educators,
+I fielded ‘Easy geom Recipes’ with a group of statistics educators,
 conducting a survey on the resource and also getting feedback via a
 focus group.
 
@@ -415,13 +426,27 @@ background (Step 4).
 
 The section is called *easy* geoms because these geom functions actually
 inherit much behavior from more primitive geoms like col, text, point,
-etc..
+segment, rect, etc..
 
 ## geom\_text\_coordinate: **1:1:1, compute\_group, GeomText**
 
-  - for each row in the input dataframe …
-  - we’ll perceive a single mark
-  - which will be defined by as single row in the internal dataframe
+The proposed function geom\_text\_coordinate() is one where a label for
+an x and y position is automatically computed. The target user interface
+will only require x and y to be specified as aesthetics, and will look
+something like this. Whereas the geom\_text() function would require a
+label aesthetic, goem\_text\_coordinate will compute this label variable
+within the function call.
+
+``` r
+ggplot(data = cars) + 
+  aes(x = speed, y = dist) + 
+  geom_point() + 
+  geom_text_coordinate() 
+```
+
+We’ll be computeing a ‘1:1:1’ type layer, which means that for each row
+of the input dataframe, a single mark will be drawn, and the internal
+data frame that ggplot2 will render with will use a single row per mark.
 
 ### Step 0: use base ggplot2
 
@@ -447,9 +472,12 @@ cars |>
             vjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-8-1.png)<!-- -->
+![](man/figures/unnamed-chunk-9-1.png)<!-- -->
 
-### Step 1: compute
+### Step 1: Compute
+
+Next, we turn to writing this compute in a way that ggplot2 layer
+functions can use.
 
 Compute functions will capture the compute that our a user-facing
 function will ultimately do for us in a plot build. Arguments that are
@@ -468,21 +496,22 @@ variable that ggplot2 understands internally, `label`.
 ``` r
 compute_group_coordinates <- function(data, scales) {
 
-data |>
+# data will contain variables 'x' and 'y', because of required aes
+data |>                                    
     mutate(label = 
              paste0("(", x, ", ", y, ")"))
 }
 ```
 
 Before we move on, it’s a good idea to check out that our function is
-working on it’s own. To use the function, remember that we need a
+working on its own. To use the function, remember that we need a
 dataframe with the expected variables, `x` and `y`. We can test the
 function with the cars dataset, but first we modify the data (that has
 variable names `speed` and `dist`) with the rename function.
 
 ``` r
 cars |> 
-  rename(x = speed, y = dist) |> 
+  rename(x = speed, y = dist) |>  # rename allows us to test function
   compute_group_coordinates() |> 
   head()
 #>   x  y   label
@@ -545,14 +574,14 @@ ggplot(data = cars) +
     )
 ```
 
-![](man/figures/unnamed-chunk-12-1.png)<!-- -->
+![](man/figures/unnamed-chunk-13-1.png)<!-- -->
 
-You are probably more familiar with `geom_*()` functions which wrap this
-ggplot2::layer() function, with a fixed stat or fixed geom. To create
-`geom_text_coordinate()`, because the use-scope is so narrow, both the
-stat and geom are ‘hard-coded’ in the layer; i.e. stat and geom are not
-arguments in the geom\_\* function. Let’s look at how we might wrap the
-layer function to create our `geom_text_coordinate()` target function.
+You are probably more familiar with `geom_*()` and `stat_*` functions
+which wrap the ggplot2::layer() function; these generally have a fixed
+geom or stat. In create `geom_text_coordinate()`, because the use-scope
+is so narrow, both the stat and geom are ‘hard-coded’ in the layer;
+i.e. stat and geom are not arguments in the geom\_\* function. Here’s
+how we specify our `geom_text_coordinate()`:
 
 ``` r
 # part b. create geom_* user-facing function using g
@@ -593,9 +622,14 @@ do in `geom_text()`.
 
 ### Step 4: Use/test/enjoy
 
-Good news. You created a function for use in a ggplot2 pipeline\!
-Remember, you can basically use geom\_text\_coordinate in the same was
-as geom\_text, but the label aesthetic is computed for you.
+Good news, we’r at Step 4\! You created a function for use in a ggplot2
+pipeline and now you can use it\! Remember, you can basically use
+geom\_text\_coordinate in the same was as geom\_text, because the geom
+argument in the layer() function is geom = GeomText, so arguments like
+check\_overlap that are usable in geom\_text will be meaningful our new
+function\! The difference, of course, is that the label aesthetic is
+computed for you – so you don’t need that aesthetic which would be
+required for the vanilla geom\_text() function.
 
 ``` r
 ggplot(data = cars) + 
@@ -604,7 +638,7 @@ ggplot(data = cars) +
   geom_text_coordinate() 
 ```
 
-![](man/figures/unnamed-chunk-14-1.png)<!-- -->
+![](man/figures/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 
@@ -612,7 +646,7 @@ last_plot() +
   aes(color = speed > 15)
 ```
 
-![](man/figures/unnamed-chunk-14-2.png)<!-- -->
+![](man/figures/unnamed-chunk-15-2.png)<!-- -->
 
 ``` r
 
@@ -621,20 +655,31 @@ last_plot() +
                        color = "black") 
 ```
 
-![](man/figures/unnamed-chunk-14-3.png)<!-- -->
+![](man/figures/unnamed-chunk-15-3.png)<!-- -->
 
 ## geom\_post: **1:1:1, compute\_group, GeomSegment**
+
+The next proposed function we’ll take on is geom\_post(). We can use
+this function where we are interested in the magnitude of y, not just
+relative positions of y. Given that we are interested in the magnitude
+of y we’d like a geom that extends from the value of y to y equal to
+zero, i.e. a ‘post’ geom. You can use a geom\_segment for this purpose
+in base ggplot2 as seen in Step 0. However, you’ll notice that the xend
+and yend, which are aesthetics that geom\_segment requires, could
+automatically be derived given the requirements of drawing a post.
+Therefore, to simplify your future plot compositions, you may want to
+define an extension function, geom\_post().
 
 ### Step 0. Use base ggplot2
 
 ``` r
 probs_df = data.frame(outcome = 0:1, 
-       prob = c(.75, .25))
+       prob = c(.7, .3))
 
 probs_df
 #>   outcome prob
-#> 1       0 0.75
-#> 2       1 0.25
+#> 1       0  0.7
+#> 2       1  0.3
 
 ggplot(data = probs_df) + 
   aes(x = outcome, y = prob, yend = 0, xend = outcome) + 
@@ -642,7 +687,7 @@ ggplot(data = probs_df) +
   geom_segment()
 ```
 
-![](man/figures/unnamed-chunk-15-1.png)<!-- -->
+![](man/figures/unnamed-chunk-16-1.png)<!-- -->
 
 ### Step 1: Compute
 
@@ -660,9 +705,9 @@ compute_group_post <- function(data, scales){
 probs_df |>
   rename(x = outcome, y = prob) |>
   compute_group_post()
-#>   x    y xend yend
-#> 1 0 0.75    0    0
-#> 2 1 0.25    1    0
+#>   x   y xend yend
+#> 1 0 0.7    0    0
+#> 2 1 0.3    1    0
 ```
 
 ### Step 2: Pass to ggproto
@@ -707,9 +752,24 @@ ggplot(data = probs_df) +
   geom_post()
 ```
 
-![](man/figures/unnamed-chunk-20-1.png)<!-- -->
+![](man/figures/unnamed-chunk-21-1.png)<!-- -->
 
 ### geom\_lollipop: Tangential bonus topic: Combining layers into single geom\_\*() function
+
+``` r
+geom_lollipop <- function(...){
+  
+  list(geom_post(...),
+       geom_point(...))
+  
+}
+
+ggplot(probs_df) + 
+  aes(x = outcome, y = prob) +
+  geom_lollipop(color = "magenta")
+```
+
+![](man/figures/unnamed-chunk-22-1.png)<!-- -->
 
 ## geom\_xy\_means: **n:1:1, compute\_group, GeomPoint**
 
@@ -731,7 +791,7 @@ ggplot(mtcars) +
              size = 8)
 ```
 
-![](man/figures/unnamed-chunk-21-1.png)<!-- -->
+![](man/figures/unnamed-chunk-23-1.png)<!-- -->
 
 ### Step 1. Write compute function
 
@@ -788,7 +848,7 @@ ggplot(mtcars) +
   geom_xy_means(size = 8)
 ```
 
-![](man/figures/unnamed-chunk-25-1.png)<!-- -->
+![](man/figures/unnamed-chunk-27-1.png)<!-- -->
 
 ``` r
 
@@ -796,7 +856,7 @@ last_plot() +
   aes(color = am == 1)
 ```
 
-![](man/figures/unnamed-chunk-25-2.png)<!-- -->
+![](man/figures/unnamed-chunk-27-2.png)<!-- -->
 
 ## geom\_chull: **N:1:n, compute\_group, GeomPolygon**
 
@@ -829,7 +889,7 @@ ggplot(mtcars) +
                color = "black")
 ```
 
-![](man/figures/unnamed-chunk-26-1.png)<!-- -->
+![](man/figures/unnamed-chunk-28-1.png)<!-- -->
 
 ### Step 1. Compute
 
@@ -907,7 +967,7 @@ ggplot(data = mtcars) +
   geom_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-31-1.png)<!-- -->
+![](man/figures/unnamed-chunk-33-1.png)<!-- -->
 
 ``` r
 
@@ -916,11 +976,202 @@ last_plot() +
       fill = factor(am))
 ```
 
-![](man/figures/unnamed-chunk-31-2.png)<!-- -->
+![](man/figures/unnamed-chunk-33-2.png)<!-- -->
 
 -----
 
 ## geom\_waterfall: **1:1:1, compute\_panel, GeomRect**
+
+*One-row geom for each row in input dataset; geom interdependence*
+
+A waterfall plot displays inflows and outflows that occur as a result of
+events as well as the balance across multiple events. It is typically
+displayed as a series of rectangles. Because the net change is displayed
+(cumulative change), there is interdependence between the geometries on
+our plot – where one rectangle ends, the next in the series begins.
+Therefore we’ll be computing by *panel* and not by group – we do not
+want ggplot2 to split the data by discrete variables, which our x axis
+is most likely to be.
+
+<!-- In this example we'll see how to alias the stat to a geom user-facing function (stat_waterfall -> geom_waterfall), and also how to change the geom to allow for additional convenient user-facing functions (stat_waterfall -> geom_waterfall_label).  We prep to create geom_waterfall label by using the default_aes slot in in the ggproto step.   -->
+
+### Step 0
+
+For ‘step 0’, we base ggplot2 to accomplish this task, and actually
+pretty closely follow Hadley Wickham’s short paper that tackles a
+waterfall plot with ggplot2.
+<https://vita.had.co.nz/papers/ggplot2-wires.pdf>
+
+``` r
+library(tidyverse)
+flow_df <- data.frame(event = c("Sales", 
+                     "Refunds",
+                     "Payouts", 
+                     "Court Losses", 
+                     "Court Wins", 
+                     "Contracts", 
+                     "Fees"),
+           change = c(6400, -1100, 
+                      -100, -4200, 3800, 
+                      1400, -2800)) %>% 
+  mutate(event = factor(event))
+
+  
+balance_df <- flow_df %>%   # maybe add factor in order if factor is not defined...
+  mutate(x_pos = event %>% as.numeric()) %>% 
+  arrange(x_pos) %>% 
+  mutate(balance = cumsum(c(0, 
+                            change[-nrow(.)]))) %>% 
+  mutate(flow = factor(sign(change)))
+
+
+ggplot(balance_df) +
+          geom_rect(
+            aes(x = event,
+              xmin = x_pos - 0.45, 
+              xmax = x_pos + 0.45, 
+              ymin = balance, 
+              ymax = balance + change)) +
+  aes(fill = sign(change))
+#> Warning in geom_rect(aes(x = event, xmin = x_pos - 0.45, xmax = x_pos + :
+#> Ignoring unknown aesthetics: x
+```
+
+![](man/figures/unnamed-chunk-34-1.png)<!-- -->
+
+### Steps 1
+
+Then, we bundle up this computation into a function (step 1), called
+compute\_panel\_waterfall. This function then define the compute\_panel
+element in the ggproto object (step 2). We want the computation done
+*panel-wise* because of the interdependence between the events, which
+run along the x axis. Group-wise computation (the defining
+compute\_group element), would fail us, as the cross-event
+interdependence would not be preserved.
+
+``` r
+compute_panel_waterfall <- function(data, scales, width = .90){
+  
+  data %>% 
+  arrange(x) %>% 
+  mutate(balance = cumsum(c(0, 
+                            change[-nrow(.)]))) %>% 
+  mutate(direction = factor(sign(change))) %>% 
+  mutate(xmin = as.numeric(x) - width/2,
+         xmax = as.numeric(x) + width/2,
+         ymin = balance,
+         ymax = balance + change) %>% 
+  # mutate(x = x_pos) %>% 
+  mutate(y = ymax) %>% 
+  mutate(gain_loss = ifelse(direction == 1, "gain", "loss"))
+  
+}
+```
+
+### Step 2
+
+Now we’ll pass the computation to the compute\_panel…
+
+``` r
+StatWaterfall <- ggplot2::ggproto(`_class` = "StatWaterfall", 
+                         `_inherit` = ggplot2::Stat,
+                         required_aes = c("change", "x"),
+                         compute_panel = compute_panel_waterfall)
+```
+
+### Step 3
+
+In step 3, we define stat\_waterfall, passing along StatWaterfall to
+create a ggplot2 layer function. We include a standard set of arguments,
+and we set the geom to ggplot2::GeomRect.
+
+``` r
+stat_waterfall <- function(geom = ggplot2::GeomRect, 
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE, ...) {
+  ggplot2::layer(
+    stat = StatWaterfall,  # proto object from step 2
+    geom = geom,  # inherit other behavior
+    data = data,
+    mapping = mapping,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+
+geom_waterfall <- stat_waterfall
+
+
+geom_waterfall_label <- function(..., lineheight = .8){
+  stat_waterfall(geom = "text", 
+                 lineheight = lineheight, ...)}
+```
+
+### Step 4
+
+In Step 4, we get to try out the functionality.
+
+``` r
+flow_df |> 
+  ggplot() +
+  geom_hline(yintercept = 0) +
+  aes(change = change, 
+      x = event) + # event in order
+  geom_waterfall()
+```
+
+<img src="man/figures/unnamed-chunk-38-1.png" width="33%" />
+
+### Bonus: default `aes` using delayed aesthetic evaluation (D.A.E.)
+
+A bonus here is a rather cool one. In general, the direction of the flow
+is of great import for a waterfall chart, and it is typically depicted
+with fill color. However, unlink say the label in
+geom\_text\_coordinate, it isn’t necessarily always the case that we’d
+want fill color to represent direction. Therefore, instead of creating a
+variable ‘fill’ in the compute\_panel\_waterfall routine, we created
+gain\_loss. We’ll refer to it in the `default_aes` slot of the
+StatWaterfall, using the ggplot2::after\_stat() call on the internally
+created variable.
+
+``` r
+StatWaterfall$default_aes <- ggplot2::aes(fill = ggplot2::after_stat(gain_loss))
+
+flow_df |> 
+  ggplot() +
+  geom_hline(yintercept = 0) +
+  aes(change = change, 
+      x = event) + # event in order
+  geom_waterfall()
+```
+
+![](man/figures/unnamed-chunk-39-1.png)<!-- -->
+
+However, we are not locked in to the gain\_loss being the variable that
+defines fill, as seen below:
+
+``` r
+last_plot() + 
+  aes(fill = event == "Sales")
+```
+
+![](man/figures/unnamed-chunk-40-1.png)<!-- -->
+
+And we can also turn off mapping to fill color by setting `aes(fill =
+NULL)`.
+
+``` r
+last_plot() + 
+  aes(fill = NULL)
+```
+
+![](man/figures/unnamed-chunk-41-1.png)<!-- -->
 
 ## geom\_circlepack: **1:1:n, compute\_panel, GeomPolygon**
 
@@ -949,7 +1200,7 @@ circle_outlines %>%
   coord_equal()
 ```
 
-![](man/figures/unnamed-chunk-32-1.png)<!-- -->
+![](man/figures/unnamed-chunk-42-1.png)<!-- -->
 
 ### Step 1. Compute
 
@@ -1020,7 +1271,7 @@ gapminder::gapminder |>
 #> Joining with `by = join_by(id)`
 ```
 
-![](man/figures/unnamed-chunk-36-1.png)<!-- -->
+![](man/figures/unnamed-chunk-46-1.png)<!-- -->
 
 ``` r
 
@@ -1029,7 +1280,7 @@ last_plot() +
 #> Joining with `by = join_by(id)`
 ```
 
-![](man/figures/unnamed-chunk-36-2.png)<!-- -->
+![](man/figures/unnamed-chunk-46-2.png)<!-- -->
 
 ``` r
 
@@ -1043,7 +1294,7 @@ last_plot() +
 #> Joining with `by = join_by(id)`
 ```
 
-![](man/figures/unnamed-chunk-36-3.png)<!-- -->
+![](man/figures/unnamed-chunk-46-3.png)<!-- -->
 
 ## geom\_circle: **1:1:n, compute\_panel, GeomPolygon**
 
@@ -1080,7 +1331,7 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |>
   geom_text(aes( label = vertex_id))
 ```
 
-![](man/figures/unnamed-chunk-37-1.png)<!-- -->
+![](man/figures/unnamed-chunk-47-1.png)<!-- -->
 
 ### Step 1. Compute
 
@@ -1161,7 +1412,7 @@ data.frame(x0 = 0:1,
   aes(fill = r)
 ```
 
-![](man/figures/unnamed-chunk-41-1.png)<!-- -->
+![](man/figures/unnamed-chunk-51-1.png)<!-- -->
 
 ``` r
 
@@ -1176,7 +1427,7 @@ diamonds |>
   coord_equal()
 ```
 
-![](man/figures/unnamed-chunk-41-2.png)<!-- -->
+![](man/figures/unnamed-chunk-51-2.png)<!-- -->
 
 ``` r
 
@@ -1188,7 +1439,7 @@ cars |>
   coord_equal()
 ```
 
-![](man/figures/unnamed-chunk-41-3.png)<!-- -->
+![](man/figures/unnamed-chunk-51-3.png)<!-- -->
 
 ``` r
 
@@ -1200,7 +1451,7 @@ last_plot() +
 #> Warning: Using alpha for a discrete variable is not advised.
 ```
 
-![](man/figures/unnamed-chunk-41-4.png)<!-- -->
+![](man/figures/unnamed-chunk-51-4.png)<!-- -->
 
 ### Discussion: Why not compute\_group
 
@@ -1243,7 +1494,7 @@ cars |>
 #> Warning: Using alpha for a discrete variable is not advised.
 ```
 
-![](man/figures/unnamed-chunk-42-1.png)<!-- -->
+![](man/figures/unnamed-chunk-52-1.png)<!-- -->
 
 ### Exercise: Write the function, geom\_heart() that will take the compute below and do it within the geom\_\* function
 
@@ -1266,7 +1517,7 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3, rotation = 0) %>%
   coord_equal()
 ```
 
-![](man/figures/unnamed-chunk-43-1.png)<!-- -->
+![](man/figures/unnamed-chunk-53-1.png)<!-- -->
 
 ## geom\_state: **1:1:n, compute\_panel, GeomPolygon**
 
@@ -1313,7 +1564,7 @@ states_characteristics |>
 #>   warning.
 ```
 
-![](man/figures/unnamed-chunk-44-1.png)<!-- -->
+![](man/figures/unnamed-chunk-54-1.png)<!-- -->
 
 ### Step 1: Write compute function 🚧
 
@@ -1406,9 +1657,41 @@ geom_state <- function(mapping = NULL, data = NULL,
 ggplot(data = states_characteristics) + 
   aes(state_name = state.name) +
   geom_state() + 
-  aes(fill = ind_vowel_states) + 
   coord_map()
+#> Joining with `by = join_by(state_name)`
+#> Warning in dplyr::left_join(data, continental_states_geo_reference): Each row in `x` is expected to match at most 1 row in `y`.
+#> ℹ Row 1 of `x` matches multiple rows.
+#> ℹ If multiple matches are expected, set `multiple = "all"` to silence this
+#>   warning.
 ```
+
+![](man/figures/unnamed-chunk-60-1.png)<!-- -->
+
+``` r
+
+last_plot() + 
+  aes(fill = ind_vowel_states)
+#> Joining with `by = join_by(state_name)`
+#> Warning in dplyr::left_join(data, continental_states_geo_reference): Each row in `x` is expected to match at most 1 row in `y`.
+#> ℹ Row 1 of `x` matches multiple rows.
+#> ℹ If multiple matches are expected, set `multiple = "all"` to silence this
+#>   warning.
+```
+
+![](man/figures/unnamed-chunk-60-2.png)<!-- -->
+
+``` r
+
+last_plot() + 
+  aes(fill = state.name == "Iowa")
+#> Joining with `by = join_by(state_name)`
+#> Warning in dplyr::left_join(data, continental_states_geo_reference): Each row in `x` is expected to match at most 1 row in `y`.
+#> ℹ Row 1 of `x` matches multiple rows.
+#> ℹ If multiple matches are expected, set `multiple = "all"` to silence this
+#>   warning.
+```
+
+![](man/figures/unnamed-chunk-60-3.png)<!-- -->
 
 ## geom\_ols: **n:k:w; interdependence**
 
@@ -1454,9 +1737,9 @@ nc_geo_reference |>
 #> Joining with `by = join_by(fips, FIPSNO)`
 ```
 
-![](man/figures/unnamed-chunk-53-1.png)<!-- -->
+![](man/figures/unnamed-chunk-63-1.png)<!-- -->
 
-### Step 1. compute 🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function*
+### Step 1. compute
 
 #### Prestep. Prepare reference sf dataframe
 
@@ -1502,11 +1785,11 @@ last_plot() |> layer_data() |> head()
 
 ### 1, create sf reference dataframe w xmin, ymin, xmax and ymax using return_st_bbox_df function
 return_st_bbox_df <- function(sf_df){
+  
+  bb <- sf::st_bbox(sf_df)
 
-  data.frame(xmin = sf::st_bbox(sf_df)[1],
-             ymin = sf::st_bbox(sf_df)[2],
-             xmax = sf::st_bbox(sf_df)[3],
-             ymax = sf::st_bbox(sf_df)[4])
+  data.frame(xmin = bb[1], ymin = bb[2],
+             xmax = bb[3], ymax = bb[4])
 
 }
 
@@ -1592,7 +1875,7 @@ ggnorthcarolina::northcarolina_county_flat |>
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-59-1.png)<!-- -->
+![](man/figures/unnamed-chunk-69-1.png)<!-- -->
 
 ``` r
 
@@ -1605,7 +1888,7 @@ last_plot() +
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-59-2.png)<!-- -->
+![](man/figures/unnamed-chunk-69-2.png)<!-- -->
 
 ## geom\_candlestick summarize first, then interdependence …
 
@@ -1684,7 +1967,7 @@ p +
   stat_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-62-1.png)<!-- -->
+![](man/figures/unnamed-chunk-72-1.png)<!-- -->
 
 ``` r
 
@@ -1694,7 +1977,7 @@ p +
              size = 4)
 ```
 
-![](man/figures/unnamed-chunk-62-2.png)<!-- -->
+![](man/figures/unnamed-chunk-72-2.png)<!-- -->
 
 ``` r
 
@@ -1704,7 +1987,7 @@ p +
              hjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-62-3.png)<!-- -->
+![](man/figures/unnamed-chunk-72-3.png)<!-- -->
 
 ``` r
 
@@ -1717,116 +2000,18 @@ p +
 #> Ignoring unknown parameters: `label` and `hjust`
 ```
 
-![](man/figures/unnamed-chunk-62-4.png)<!-- -->
+![](man/figures/unnamed-chunk-72-4.png)<!-- -->
 
 ## stat\_waterfall: **1:1:1; compute\_panel; GeomRect, GeomText**
 
-Because the stat\_\* functions might require more cognitively from the
-user, aliasing might be a good idea, creating one or more geoms\_\* the
-stat layer.
-
-The function geom\_waterfall() is exported from the ggwaterfall package,
-which is being developed at github.com/EvaMaeRey/ggwaterfall
-
-*One-row geom for each row in input dataset; geom interdependence*
-
-A waterfall plot displays inflows and outflows that occur as a result of
-events as well as the balance across multiple events. It is typically
-displayed as a series of rectangles. Because the net change is displayed
-(cumulative change), there is interdependence between the geometries on
-our plot – where one rectangle ends, the next in the series begins.
-
-In this example we’ll see how to alias the stat to a geom user-facing
-function (stat\_waterfall -\> geom\_waterfall), and also how to change
-the geom to allow for additional convenient user-facing functions
-(stat\_waterfall -\> geom\_waterfall\_label). We prep to create
-geom\_waterfall label by using the default\_aes slot in in the ggproto
-step.
+Now, we also return to the waterfall question. Let’s see how we can
+prepare the same stat to serve both with GeomRect and GeomText to write
+user-facing functions. In brief, we’ll create a stat\_\* user-facing
+function which doesn’t hard-code our geom, but has the default GeomRect.
+We’ll alias stat\_waterfall to geom\_\* waterfall, and also create
+geom\_waterfall\_text for labeling the rectangle-based layer.
 
 ``` r
-library(ggwaterfall)
-library(tidyverse)
-flow_df <- data.frame(
-  event = c("Sales", "Refunds", "Payouts", "Court Losses", 
-            "Court Wins", "Contracts", "Fees"),
-           change = c(6400, -1100, 
-                      -100, -4200, 3800, 
-                      1400, -2800)) |> 
-  mutate(event = factor(event))
-
-flow_df
-#>          event change
-#> 1        Sales   6400
-#> 2      Refunds  -1100
-#> 3      Payouts   -100
-#> 4 Court Losses  -4200
-#> 5   Court Wins   3800
-#> 6    Contracts   1400
-#> 7         Fees  -2800
-
-flow_df |> 
-  ggplot() +
-  geom_hline(yintercept = 0) +
-  aes(change = change, 
-      x = event) + # event in order
-  geom_waterfall() + 
-  geom_waterfall_label() + 
-  scale_y_continuous(expand = expansion(.1)) + 
-  scale_fill_manual(values = c("springgreen4", "darkred"))
-```
-
-![](man/figures/unnamed-chunk-63-1.png)<!-- -->
-
-The strategy to create geom waterfall follows the standard four steps.
-
-### Step 0
-
-For ‘step 0’, we base ggplot2 to accomplish this task, and actually
-pretty closely follow Hadley Wickham’s short paper that tackles a
-waterfall plot with ggplot2.
-<https://vita.had.co.nz/papers/ggplot2-wires.pdf>
-
-### Steps 1 and 2
-
-Then, we bundle up this computation into a function (step 1), called
-compute\_panel\_waterfall. This function then define the compute\_panel
-element in the ggproto object (step 2). We want the computation done
-*panel-wise* because of the interdependence between the events, which
-run along the x axis. Group-wise computation (the defining
-compute\_group element), would fail us, as the cross-event
-interdependence would not be preserved.
-
-``` r
-compute_panel_waterfall <- function(data, scales, width = .90){
-  
-  data %>% 
-  mutate(x_scale = x) %>% 
-  mutate(x_pos = x %>% as.numeric()) %>% 
-  arrange(x_pos) %>% 
-  mutate(balance = cumsum(c(0, 
-                            change[-nrow(.)]))) %>% 
-  mutate(direction = factor(sign(change))) %>% 
-  mutate(xmin = x_pos - width/2,
-         xmax = x_pos + width/2,
-         ymin = balance,
-         ymax = balance + change) %>% 
-  mutate(x = x_pos) %>% 
-  mutate(y = ymax) %>% 
-  mutate(gain_loss = ifelse(direction == 1, "gain", "loss"))
-  
-}
-
-
-### Step 1.1 Test compute 
-
-# flow_df %>% 
-#   rename(x = event) %>% 
-#   compute_panel_waterfall() 
-
-
-
-## Step 2. Pass compute to ggproto 
-
 StatWaterfall <- ggplot2::ggproto(`_class` = "StatWaterfall", 
                          `_inherit` = ggplot2::Stat,
                          required_aes = c("change", "x"),
@@ -1835,15 +2020,7 @@ StatWaterfall <- ggplot2::ggproto(`_class` = "StatWaterfall",
                                            fill = ggplot2::after_stat(gain_loss),
                                            vjust = ggplot2::after_stat((direction == -1) %>%
                                                                 as.numeric)))
-```
 
-### Step 3
-
-In step 3, we define stat\_waterfall, passing along StatWaterfall to
-create a ggplot2 layer function. We include a standard set of arguments,
-and we set the geom to ggplot2::GeomRect.
-
-``` r
 stat_waterfall <- function(geom = ggplot2::GeomRect, 
   mapping = NULL,
   data = NULL,
@@ -1865,35 +2042,83 @@ stat_waterfall <- function(geom = ggplot2::GeomRect,
 
 geom_waterfall <- stat_waterfall
 
-
 geom_waterfall_label <- function(..., lineheight = .8){
   stat_waterfall(geom = "text", 
                  lineheight = lineheight, ...)}
-```
 
-### Step 4
-
-In Step 4, we get to try out the functionality.
-
-``` r
 flow_df |> 
   ggplot() +
   geom_hline(yintercept = 0) +
   aes(change = change, 
       x = event) + # event in order
   geom_waterfall() + 
-  geom_waterfall_label() + 
-  scale_y_continuous(expand = expansion(.1)) + 
-  scale_fill_manual(values = c("springgreen4", "darkred"))
+  geom_waterfall_label()
+```
+
+![](man/figures/unnamed-chunk-73-1.png)<!-- -->
+
+``` r
 
 last_plot() + 
   aes(x = fct_reorder(event, change))
+```
+
+![](man/figures/unnamed-chunk-73-2.png)<!-- -->
+
+``` r
 
 last_plot() + 
   aes(x = fct_reorder(event, abs(change)))
 ```
 
-<img src="man/figures/unnamed-chunk-66-1.png" width="33%" /><img src="man/figures/unnamed-chunk-66-2.png" width="33%" /><img src="man/figures/unnamed-chunk-66-3.png" width="33%" />
+![](man/figures/unnamed-chunk-73-3.png)<!-- -->
+
+## Bonus part 2. DAE with GeomText target
+
+If you’ve still got some stamina, let’s talk about another great usage
+of DEA in Stat definitions: for default label definitions. Below, we
+overwrite the StatWaterfall default\_aes yet again, with the default
+fill aes defined, but also the label and vjust aes, which are relevant
+to labeling.
+
+Then we define a separate user-facing function geom\_waterfall\_label,
+based on the same stat.
+
+``` r
+StatWaterfall$default_aes <- ggplot2::aes(fill = ggplot2::after_stat(gain_loss),
+                                          label = ggplot2::after_stat(change),
+                                          vjust = ggplot2::after_stat((direction == -1) %>%
+                                                                        as.numeric))
+
+geom_waterfall_label <- function(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE, ...) {
+  ggplot2::layer(
+    stat = StatWaterfall,  # proto object from step 2
+    geom = ggplot2::GeomText, 
+    data = data,
+    mapping = mapping,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+
+flow_df |> 
+  ggplot() +
+  geom_hline(yintercept = 0) +
+  aes(change = change, 
+      x = event) + # event in order
+  geom_waterfall() + 
+  geom_waterfall_label()
+```
+
+![](man/figures/unnamed-chunk-74-1.png)<!-- -->
 
 The final plot shows that while there are some convenience defaults for
 label and fill, these can be over-ridden.
@@ -1904,9 +2129,9 @@ last_plot() +
   aes(fill = NULL)
 ```
 
-![](man/figures/unnamed-chunk-67-1.png)<!-- -->
+![](man/figures/unnamed-chunk-75-1.png)<!-- -->
 
-# Piggyback as much as possible:
+# Piggyback on compute
 
 ## Some Delayed Aesthetic Evaluation
 
@@ -1928,7 +2153,7 @@ ggplot(data = mtcars) +
 #> `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 ```
 
-![](man/figures/unnamed-chunk-68-1.png)<!-- --> \#\#\# Step 1. compute
+![](man/figures/unnamed-chunk-76-1.png)<!-- --> \#\#\# Step 1. compute
 
 ``` r
 compute_group_smooth_fit <- function(data, scales, method = NULL, formula = NULL,
@@ -1973,6 +2198,8 @@ geom_smooth_predict <- function(xseq,  mapping = NULL, data = NULL, ..., method 
 
 ## geom\_barlab: Adding defaults to existing stats via ggproto editing
 
+# facet\_sample
+
 # theme\_chalkboard()
 
 ``` r
@@ -2012,7 +2239,7 @@ ggplot(data = cars) +
   theme_chalkboard()
 ```
 
-![](man/figures/unnamed-chunk-73-1.png)<!-- -->
+![](man/figures/unnamed-chunk-81-1.png)<!-- -->
 
 ``` r
 
@@ -2020,7 +2247,7 @@ last_plot() +
   theme_chalkboard_slate()
 ```
 
-![](man/figures/unnamed-chunk-73-2.png)<!-- -->
+![](man/figures/unnamed-chunk-81-2.png)<!-- -->
 
 ``` r
 geoms_chalk_on <- function(color = "lightyellow", fill = color){
@@ -2048,7 +2275,7 @@ geoms_chalk_on()
 last_plot()
 ```
 
-![](man/figures/unnamed-chunk-75-1.png)<!-- -->
+![](man/figures/unnamed-chunk-83-1.png)<!-- -->
 
 # modified start points; ggverbatim(),
 
