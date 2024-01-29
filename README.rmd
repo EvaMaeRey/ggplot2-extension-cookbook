@@ -22,9 +22,9 @@ library(tidyverse)
 <!-- badges: start -->
 <!-- badges: end -->
 
-This *ggplot2 Extension Cookbook* aims to provide ggplot2 some extension strategies in a consistent and accessible way.  The target audience is fluent users of ggplot2 and R who have not yet entered the extension space.  The main tactic is to provide many extensions examples for building familiarity and confidence, and also which might serve as specific reference when readers are inspired to build their own extensions.  
+This *ggplot2 Extension Cookbook* aims to provide ggplot2 some extension strategies in a consistent and accessible way.  The target audience is fluent ggplot2 and R users who have not yet entered the extension space.  The main tactic is to provide many extensions examples for building familiarity and confidence, and also which might serve as specific reference when readers are inspired to build their own extensions.  
 
-In that material, I'll try to stick to a formula to orient you to the ggplot2 extension, so even if a few details seem confusing, you'll know 'where' you are at a higher level:
+In that material, I'll try to stick to an enumerated formula to orient you to the ggplot2 extension, so even if a few details seem confusing, you'll know 'where' you are at a higher level:
 
 - Step 0: get job done with 'base' ggplot2
 - Step 1: Write a function for the 'compute'
@@ -38,7 +38,7 @@ Regarding focus on stat_'s *versus* geom_'s functions, I take a geom_* -first ap
 
 Finally, most of the code is at the 'R for Data Science' level, and not 'Advanced R' level, which I hope will afford greater reach.  While object oriented programming (OOP) gets top billing in many extension materials, but many folks that *are* expert users of ggplot2 might *not* know much about OOP.  I see what can be accomplished with little emphasis on OOP and ggroto.  
 
-Reader, I do think it is important for you to recognize that ggplot2 objects are not, of course the rendered plot, but rather a plot specification (of global data, aesthetic mapping, etc) that result from the declarations the user has made.  But I think you've probably made this realization very early on in your ggplot2 journey already.  You know that the ggplot plot building syntax allows users to make changes to the overall plot *specification* incrementally. In other words the `+` operator allows us to modify the the ggplot2 object. And the ggroto system allows changes to the ggplot2 specification from outside the ggplot2 package too --- from extension packages.  
+Reader, I do think it is important for you to recognize that ggplot2 objects (i.e. p in p <- ggplot(cars, aes(speed, dist)) + geom_point()) are not, of course the rendered plot, but rather a plot specification (of global data, aesthetic mapping, etc) that result from the declarations the user has made.  But I think you've probably made this realization very early on in your ggplot2 journey already.  You know that the ggplot plot building syntax allows users to make changes to the overall plot *specification* incrementally. In other words the `+` operator allows us to modify the the ggplot2 object. And the ggroto system allows changes to the ggplot2 specification from outside the ggplot2 package too --- from extension packages.  
 
 For those who have dipped your toes into extension, the composition of the extension elements will look different from what you will see in the wild.  Specifically, I try to define ggproto objects in as concise and high-level a way as possible --- and as close to *ignorable* for those put off or nervous about OOP methods.  
 
@@ -78,7 +78,7 @@ I experienced about a year of failure and frustration when first entering the ex
 
 I'm grateful for several experiences and the efforts of others that have refined my thinking about what will work for newcomers to extension  First, after just getting my own feet wet in extension, I had the chance to work on extension with underclassmen, undergraduate students in the context of their independent studies.  Our focus was the same type of extension that Pederson demonstrated -- a geom_* function that used a Stat to do some computational work, and then inherit the rest of its behavior from a more primitive geom.  
 
-Working with new-to-R students meant that I got to reflect on workflow and revise and reformulateit; how would we build up skills and ideas in way that would be accessible to *very* new R and ggplot2 users. As veterans of just one or two stats classes that used R and ggplot2, what would these students they find familiar and accessible?  What might we be able to de-emphasize? ggproto and object oriented programming hadn't been touched in coursework.  Could we still still succeed with extension? 
+Working with new-to-R students gave me a chance to reflect on my fledgling workflow and reformulate it; how would we build up skills and ideas in way that would be accessible to *very* new R and ggplot2 users. What would these students -- veterans of just one or two stats classes that used R and ggplot2, find familiar and accessible?  What might we be able to de-emphasize? ggproto and object oriented programming hadn't been touched in coursework.  Could we still still succeed with extension? 
 
 The following steps emerged:
 
@@ -257,7 +257,7 @@ The section is called *easy* geoms because these geom functions actually inherit
 
 ## geom_text_coordinate: **1:1:1, compute_group, GeomText** 
 
-The proposed function geom_text_coordinate() is one where a label for an x and y position is automatically computed.  The target user interface will only require x and y to be specified as aesthetics, and will look something like this.  Whereas the geom_text() function would require a label aesthetic, goem_text_coordinate will compute this label variable within the function call. 
+The proposed function geom_text_coordinate() is one where a label for an x and y position is automatically computed.  The target user interface will only require x and y to be specified as aesthetics, and will look something like this.  Whereas the geom_text() function would require a label aesthetic, geom_text_coordinate will compute this label variable within the function call. 
 
 ```{r, eval = F}
 ggplot(data = cars) + 
@@ -266,7 +266,7 @@ ggplot(data = cars) +
   geom_text_coordinate() 
 ```
 
-We'll be computeing a '1:1:1' type layer, which means that for each row of the input dataframe, a single mark will be drawn, and the internal data frame that ggplot2 will render with will use a single row per mark. 
+We'll be computing a '1:1:1' type layer, which means that for each row of the input dataframe, a single mark will be drawn, and the internal data frame that ggplot2 will render with will use a single row per mark. 
 
 ### Step 0: use base ggplot2
 
@@ -727,7 +727,7 @@ ggplot(balance_df) +
 ### Steps 1
 
 
-Then, we bundle up this computation into a function (step 1), called compute_panel_waterfall.  This function then define the compute_panel element in the ggproto object (step 2).  We want the computation done *panel-wise* because of the interdependence between the events, which run along the x axis.  Group-wise computation (the defining compute_group element), would fail us, as the cross-event interdependence would not be preserved. 
+Then, we bundle up this computation into a function (step 1), called compute_panel_waterfall.   We want the computation done *panel-wise* because of the interdependence between the events, which run along the x axis.  Group-wise computation (the defining compute_group element), would fail us, as the cross-event interdependence would not be preserved. 
 
 ```{r}
 compute_panel_waterfall <- function(data, scales, width = .90){
@@ -789,7 +789,7 @@ geom_waterfall <- function(
 
 In Step 4, we get to try out the functionality.  
 
-```{r, out.width="33%", fig.show='hold'}
+```{r}
 flow_df |> 
   ggplot() +
   geom_hline(yintercept = 0) +
@@ -800,11 +800,21 @@ flow_df |>
 
 ### Bonus: default `aes` using delayed aesthetic evaluation (D.A.E.)
 
-A bonus here is a rather cool one.  In general, the direction of the flow is of great import for a waterfall chart, and it is typically depicted with fill color.  However, unlink say the label in geom_text_coordinate, it isn't necessarily always the case that we'd want fill color to represent direction.  Therefore, instead of creating a variable 'fill' in the compute_panel_waterfall routine, we created gain_loss.  We'll refer to it in the `default_aes` slot of the StatWaterfall, using the ggplot2::after_stat() call on the internally created variable.
+The bonus topic is on defining a default aesthetic.  In general, the direction of the flow is of great import for a waterfall chart, and it is typically depicted with fill color.  However, flow direction mapped to fill color might not be absolutely fundamental in how we conceive of a waterfall plot.  Therefore, instead of creating a variable 'fill' in the compute_panel_waterfall routine, we created gain_loss which we can reference with delayed aesthetic evaluation, in this case ggplot2::after_stat().  We'll refer to it in the `default_aes` slot of the StatWaterfall, using the ggplot2::after_stat() call on the internally created variable.
 
 ```{r}
-StatWaterfall$default_aes <- ggplot2::aes(fill = ggplot2::after_stat(gain_loss))
+StatWaterfall <- ggplot2::ggproto(`_class` = "StatWaterfall", 
+                         `_inherit` = ggplot2::Stat,
+                         required_aes = c("change", "x"),
+                         compute_panel = compute_panel_waterfall, 
+                         default_aes =                              ### NEW!
+                           ggplot2::aes(fill =
+                                          ggplot2::after_stat(gain_loss)))
+```
 
+Now, since geom_waterfall calls StatWaterfall and we have added the default fill aesthetic, when we re-execute the code creating our plot, now we automatically get the direction of flow mapped to fill color. 
+
+```{r}
 flow_df |> 
   ggplot() +
   geom_hline(yintercept = 0) +
@@ -1352,7 +1362,7 @@ StatNcfips <- ggplot2::ggproto(`_class` = "StatNcfips",
 
 
 
-### Step 3. pass to user-facing function (wrapping ggplot::layer_sf() instead of ggplot2::layer())  🚧 *want to see if xmin, xmax columns can be added within compute using ggplot2 function; more to figure out with CRSs*
+### Step 3. pass to user-facing function (wrapping ggplot::layer_sf() instead of ggplot2::layer())  🚧 *more check with CRSs*
 
 
 
