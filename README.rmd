@@ -686,7 +686,7 @@ A waterfall plot displays inflows and outflows that occur as a result of events 
 
 <!-- In this example we'll see how to alias the stat to a geom user-facing function (stat_waterfall -> geom_waterfall), and also how to change the geom to allow for additional convenient user-facing functions (stat_waterfall -> geom_waterfall_label).  We prep to create geom_waterfall label by using the default_aes slot in in the ggproto step.   -->
 
-### Step 0
+### Step 0. Use base ggplot2
 
 For 'step 0', we base ggplot2 to accomplish this task, and actually pretty closely follow Hadley Wickham's short paper that tackles a waterfall plot with ggplot2. https://vita.had.co.nz/papers/ggplot2-wires.pdf
 
@@ -724,7 +724,7 @@ ggplot(balance_df) +
   aes(fill = sign(change))
 ```
 
-### Steps 1
+### Steps 1. compute
 
 
 Then, we bundle up this computation into a function (step 1), called compute_panel_waterfall.   We want the computation done *panel-wise* because of the interdependence between the events, which run along the x axis.  Group-wise computation (the defining compute_group element), would fail us, as the cross-event interdependence would not be preserved. 
@@ -748,7 +748,7 @@ compute_panel_waterfall <- function(data, scales, width = .90){
 }
 ```
 
-### Step 2 
+### Step 2. Define Stat, passing to ggproto
 
 Now we'll pass the computation to the compute_panel...
 
@@ -760,7 +760,7 @@ StatWaterfall <- ggplot2::ggproto(`_class` = "StatWaterfall",
 ```
 
 
-### Step 3
+### Step 3. Pass to user-facing function
 
 In step 3, we define stat_waterfall, passing along StatWaterfall to create a ggplot2 layer function. We include a standard set of arguments, and we set the geom to ggplot2::GeomRect.  
 
@@ -785,7 +785,7 @@ geom_waterfall <- function(
 }
 ```
 
-### Step 4
+### Step 4. Use/test/enjoy
 
 In Step 4, we get to try out the functionality.  
 
@@ -1169,7 +1169,7 @@ ggplot2::map_data("state") |>
   mutate(state_name = stringr::str_to_title(state_name)) |> 
   rename(x = long, y = lat) |> 
   select(-subregion) |> 
-  rename(geometry_group = group) ->
+  rename(state_id_number = group) ->
 continental_states_geo_reference
 ```
 
@@ -1180,7 +1180,7 @@ compute_panel_state <- function(data, scales){
   
   data |> 
     dplyr::left_join(continental_states_geo_reference) |>
-    dplyr::mutate(group = geometry_group)
+    dplyr::mutate(group = state_id_number)
   
 }
 ```
@@ -1200,10 +1200,7 @@ states_characteristics |>
 StatUsstate <- ggplot2::ggproto(`_class` = "StatUsstate",
                                 `_inherit` = ggplot2::Stat,
                                 required_aes = c("state_name"),
-                                compute_panel = compute_panel_state#,
-                                #default_aes = aes(group =
-                                                    # after_stat(geometry_group))
-)
+                                compute_panel = compute_panel_state)
 ```
 
 
@@ -1251,14 +1248,83 @@ last_plot() +
 
 
 
-## geom_ols: **n:k:w; interdependence**
+## geom_linear_parallel: **n:k:w; interdependence**
 
 *between-group computation*
 
-```{r}
+# Step 1. Get the job done with ggplot2
 
+```{r}
+model_bill_length <- lm(bill_length_mm ~ 
+                        bill_depth_mm + species, 
+                        data = palmerpenguins::penguins)
+
+penguins_w_fit_df <- palmerpenguins::penguins |>
+  select(bill_length_mm, bill_depth_mm, species) |>
+  ggplot2::remove_missing() |>
+  mutate(bill_length_fit = model_bill_length$fitted.values)
+
+ggplot(penguins_w_fit_df) +
+  aes(x = bill_depth_mm,
+      y = bill_length_mm) +
+  geom_point() + 
+  aes(color = species) + 
+  geom_line(aes(y = bill_length_fit))
 ```
 
+```{r}
+compute_panel_lm_parallel <- function(data, scales){
+  
+  model <- lm(y ~ x + category, data = data)
+  
+  data |>
+    mutate(y = model$fitted)
+  
+}
+```
+
+
+### Step 2. Pass compute to ggproto object
+
+```{r}
+StatParallel <- ggplot2::ggproto(`_class` = "StatParallel",
+                           `_inherit` = ggplot2::Stat,
+                           required_aes = c("x", "y", "category"),
+                           compute_panel = compute_panel_lm_parallel,
+                           default_aes = aes(color = after_stat(category)))
+```
+
+
+### Step 3. Pass to user-facing function
+
+```{r}
+geom_linear_parallel <- function(mapping = NULL, data = NULL,
+                           position = "identity", na.rm = FALSE,
+                           show.legend = NA,
+                           inherit.aes = TRUE, ...) {
+  ggplot2::layer(
+    stat = StatParallel, # proto object from Step 2
+    geom = ggplot2::GeomLine, # inherit other behavior
+    data = data,
+    mapping = mapping,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+```
+
+### Step 4. Use/test/enjoy
+
+
+```{r}
+ggplot(palmerpenguins::penguins) +
+  aes(x = bill_depth_mm, y = bill_length_mm,
+      color = species, category = species) +
+  geom_point() + 
+  geom_linear_parallel()
+```
 
 
 

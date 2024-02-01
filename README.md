@@ -46,11 +46,13 @@
           - [Step 4. Try out/test/ enjoy](#step-4-try-outtest-enjoy)
       - [geom\_waterfall: **1:1:1, compute\_panel,
         GeomRect**](#geom_waterfall-111-compute_panel-geomrect)
-          - [Step 0](#step-0)
-          - [Steps 1](#steps-1)
-          - [Step 2](#step-2)
-          - [Step 3](#step-3)
-          - [Step 4](#step-4)
+          - [Step 0. Use base ggplot2](#step-0-use-base-ggplot2-3)
+          - [Steps 1. compute](#steps-1-compute)
+          - [Step 2. Define Stat, passing to
+            ggproto](#step-2-define-stat-passing-to-ggproto)
+          - [Step 3. Pass to user-facing
+            function](#step-3-pass-to-user-facing-function)
+          - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-3)
           - [Bonus: default `aes` using delayed aesthetic evaluation
             (D.A.E.)](#bonus-default-aes-using-delayed-aesthetic-evaluation-dae)
       - [geom\_circlepack: **1:1:n, compute\_panel,
@@ -61,8 +63,8 @@
           - [Step 2. pass to ggproto
             object](#step-2-pass-to-ggproto-object-1)
           - [Step 3. pass to user-facing
-            function](#step-3-pass-to-user-facing-function)
-          - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-3)
+            function](#step-3-pass-to-user-facing-function-1)
+          - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-4)
       - [geom\_circle: **1:1:n, compute\_panel,
         GeomPolygon**](#geom_circle-11n-compute_panel-geompolygon)
           - [Step 0. Do it with base
@@ -79,15 +81,22 @@
             function](#exercise-write-the-function-geom_heart-that-will-take-the-compute-below-and-do-it-within-the-geom_-function)
       - [geom\_state: **1:1:n, compute\_panel,
         GeomPolygon**](#geom_state-11n-compute_panel-geompolygon)
-          - [Step 0: use base ggplot2](#step-0-use-base-ggplot2-3)
+          - [Step 0: use base ggplot2](#step-0-use-base-ggplot2-4)
           - [Step 1: Write compute function
             🚧](#step-1-write-compute-function-)
           - [Step 2. Pass to ggproto](#step-2-pass-to-ggproto-3)
           - [Step 3. Pass to user-facing
-            function](#step-3-pass-to-user-facing-function-1)
-          - [Step 4. Use/Test/Enjoy](#step-4-usetestenjoy-4)
-      - [geom\_ols: **n:k:w;
-        interdependence**](#geom_ols-nkw-interdependence)
+            function](#step-3-pass-to-user-facing-function-2)
+          - [Step 4. Use/Test/Enjoy](#step-4-usetestenjoy-5)
+      - [geom\_lm\_parallel: **n:k:w;
+        interdependence**](#geom_lm_parallel-nkw-interdependence)
+  - [Step 1. Get the job done with
+    ggplot2](#step-1-get-the-job-done-with-ggplot2)
+      - [Step 2. Pass compute to ggproto
+        object](#step-2-pass-compute-to-ggproto-object)
+      - [Step 3. Pass to user-facing
+        function](#step-3-pass-to-user-facing-function-3)
+      - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-6)
       - [geom\_county: **1:1:1, compute\_panel,
         GeomSf**](#geom_county-111-compute_panel-geomsf)
           - [Step 0. get it done in base
@@ -99,7 +108,7 @@
             ggplot::layer\_sf() instead of ggplot2::layer()) 🚧 *more
             check with
             CRSs*](#step-3-pass-to-user-facing-function-wrapping-ggplotlayer_sf-instead-of-ggplot2layer--more-check-with-crss)
-          - [Step 4. Use/test/enjoy\!](#step-4-usetestenjoy-5)
+          - [Step 4. Use/test/enjoy\!](#step-4-usetestenjoy-7)
       - [geom\_candlestick summarize first, then interdependence
         …](#geom_candlestick-summarize-first-then-interdependence-)
   - [stat\_\* layers: keeping flexible via stat\_\*
@@ -116,8 +125,8 @@
       - [Borrowing compute](#borrowing-compute)
       - [geom\_smoothfit: **1:1:1** ggproto piggybacking on
         compute…](#geom_smoothfit-111-ggproto-piggybacking-on-compute)
-          - [Step 2](#step-2-1)
-          - [Step 3](#step-3-1)
+          - [Step 2](#step-2)
+          - [Step 3](#step-3)
   - [add default aesthetics](#add-default-aesthetics)
       - [geom\_barlab: Adding defaults to existing stats via ggproto
         editing](#geom_barlab-adding-defaults-to-existing-stats-via-ggproto-editing)
@@ -986,7 +995,7 @@ is most likely to be.
 
 <!-- In this example we'll see how to alias the stat to a geom user-facing function (stat_waterfall -> geom_waterfall), and also how to change the geom to allow for additional convenient user-facing functions (stat_waterfall -> geom_waterfall_label).  We prep to create geom_waterfall label by using the default_aes slot in in the ggproto step.   -->
 
-### Step 0
+### Step 0. Use base ggplot2
 
 For ‘step 0’, we base ggplot2 to accomplish this task, and actually
 pretty closely follow Hadley Wickham’s short paper that tackles a
@@ -1030,7 +1039,7 @@ ggplot(balance_df) +
 
 ![](man/figures/unnamed-chunk-34-1.png)<!-- -->
 
-### Steps 1
+### Steps 1. compute
 
 Then, we bundle up this computation into a function (step 1), called
 compute\_panel\_waterfall. We want the computation done *panel-wise*
@@ -1058,7 +1067,7 @@ compute_panel_waterfall <- function(data, scales, width = .90){
 }
 ```
 
-### Step 2
+### Step 2. Define Stat, passing to ggproto
 
 Now we’ll pass the computation to the compute\_panel…
 
@@ -1069,7 +1078,7 @@ StatWaterfall <- ggplot2::ggproto(`_class` = "StatWaterfall",
                          compute_panel = compute_panel_waterfall)
 ```
 
-### Step 3
+### Step 3. Pass to user-facing function
 
 In step 3, we define stat\_waterfall, passing along StatWaterfall to
 create a ggplot2 layer function. We include a standard set of arguments,
@@ -1103,7 +1112,7 @@ geom_waterfall_label <- function(..., lineheight = .8){
                  lineheight = lineheight, ...)}
 ```
 
-### Step 4
+### Step 4. Use/test/enjoy
 
 In Step 4, we get to try out the functionality.
 
@@ -1579,7 +1588,7 @@ ggplot2::map_data("state") |>
   mutate(state_name = stringr::str_to_title(state_name)) |> 
   rename(x = long, y = lat) |> 
   select(-subregion) |> 
-  rename(geometry_group = group) ->
+  rename(state_id_number = group) ->
 continental_states_geo_reference
 ```
 
@@ -1590,7 +1599,7 @@ compute_panel_state <- function(data, scales){
   
   data |> 
     dplyr::left_join(continental_states_geo_reference) |>
-    dplyr::mutate(group = geometry_group)
+    dplyr::mutate(group = state_id_number)
   
 }
 ```
@@ -1607,18 +1616,18 @@ states_characteristics |>
 #> ℹ If multiple matches are expected, set `multiple = "all"` to silence this
 #>   warning.
 #> # A tibble: 15,529 × 7
-#>    state_name ind_vowel_states     x     y geometry_group order group
-#>    <chr>      <lgl>            <dbl> <dbl>          <dbl> <int> <dbl>
-#>  1 Alabama    TRUE             -87.5  30.4              1     1     1
-#>  2 Alabama    TRUE             -87.5  30.4              1     2     1
-#>  3 Alabama    TRUE             -87.5  30.4              1     3     1
-#>  4 Alabama    TRUE             -87.5  30.3              1     4     1
-#>  5 Alabama    TRUE             -87.6  30.3              1     5     1
-#>  6 Alabama    TRUE             -87.6  30.3              1     6     1
-#>  7 Alabama    TRUE             -87.6  30.3              1     7     1
-#>  8 Alabama    TRUE             -87.6  30.3              1     8     1
-#>  9 Alabama    TRUE             -87.7  30.3              1     9     1
-#> 10 Alabama    TRUE             -87.8  30.3              1    10     1
+#>    state_name ind_vowel_states     x     y state_id_number order group
+#>    <chr>      <lgl>            <dbl> <dbl>           <dbl> <int> <dbl>
+#>  1 Alabama    TRUE             -87.5  30.4               1     1     1
+#>  2 Alabama    TRUE             -87.5  30.4               1     2     1
+#>  3 Alabama    TRUE             -87.5  30.4               1     3     1
+#>  4 Alabama    TRUE             -87.5  30.3               1     4     1
+#>  5 Alabama    TRUE             -87.6  30.3               1     5     1
+#>  6 Alabama    TRUE             -87.6  30.3               1     6     1
+#>  7 Alabama    TRUE             -87.6  30.3               1     7     1
+#>  8 Alabama    TRUE             -87.6  30.3               1     8     1
+#>  9 Alabama    TRUE             -87.7  30.3               1     9     1
+#> 10 Alabama    TRUE             -87.8  30.3               1    10     1
 #> # ℹ 15,519 more rows
 ```
 
@@ -1628,10 +1637,7 @@ states_characteristics |>
 StatUsstate <- ggplot2::ggproto(`_class` = "StatUsstate",
                                 `_inherit` = ggplot2::Stat,
                                 required_aes = c("state_name"),
-                                compute_panel = compute_panel_state#,
-                                #default_aes = aes(group =
-                                                    # after_stat(geometry_group))
-)
+                                compute_panel = compute_panel_state)
 ```
 
 ### Step 3. Pass to user-facing function
@@ -1696,9 +1702,90 @@ last_plot() +
 
 ![](man/figures/unnamed-chunk-61-3.png)<!-- -->
 
-## geom\_ols: **n:k:w; interdependence**
+## geom\_lm\_parallel: **n:k:w; interdependence**
 
 *between-group computation*
+
+# Step 1. Get the job done with ggplot2
+
+``` r
+model_bill_length <- lm(bill_length_mm ~ 
+                          bill_depth_mm + species, 
+                        data = palmerpenguins::penguins)
+
+penguins_w_fit_df <- palmerpenguins::penguins |>
+  select(bill_length_mm, bill_depth_mm, species) |>
+  ggplot2::remove_missing() |>
+  mutate(bill_length_fit = model_bill_length$fitted.values)
+#> Warning: Removed 2 rows containing missing values or values outside the scale
+#> range.
+
+ggplot(penguins_w_fit_df) +
+  aes(x = bill_depth_mm,
+      y = bill_length_mm) +
+  geom_point() + 
+  aes(color = species) + 
+  geom_line(aes(y = bill_length_fit))
+```
+
+![](man/figures/unnamed-chunk-62-1.png)<!-- -->
+
+``` r
+compute_panel_lm_parallel <- function(data, scales){
+  
+  model <- lm(y ~ x + category, data = data)
+  
+  data |>
+    mutate(y = model$fitted)
+  
+}
+```
+
+### Step 2. Pass compute to ggproto object
+
+``` r
+StatParallel <- ggplot2::ggproto(`_class` = "StatParallel",
+                           `_inherit` = ggplot2::Stat,
+                           required_aes = c("x", "y", "category"),
+                           compute_panel = compute_panel_lm_parallel,
+                           default_aes = aes(color = after_stat(category)))
+```
+
+### Step 3. Pass to user-facing function
+
+``` r
+geom_linear_parallel <- function(mapping = NULL, data = NULL,
+                           position = "identity", na.rm = FALSE,
+                           show.legend = NA,
+                           inherit.aes = TRUE, ...) {
+  ggplot2::layer(
+    stat = StatParallel, # proto object from Step 2
+    geom = ggplot2::GeomLine, # inherit other behavior
+    data = data,
+    mapping = mapping,
+    position = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+```
+
+### Step 4. Use/test/enjoy
+
+``` r
+ggplot(palmerpenguins::penguins) +
+  aes(x = bill_depth_mm, y = bill_length_mm,
+      color = species, category = species) +
+  geom_point() + 
+  geom_linear_parallel()
+#> Warning: Removed 2 rows containing non-finite outside the scale range
+#> (`stat_parallel()`).
+#> Warning: Removed 2 rows containing missing values or values outside the scale range
+#> (`geom_point()`).
+```
+
+![](man/figures/unnamed-chunk-66-1.png)<!-- -->
 
 ## geom\_county: **1:1:1, compute\_panel, GeomSf**
 
@@ -1740,7 +1827,7 @@ nc_geo_reference |>
 #> Joining with `by = join_by(fips, FIPSNO)`
 ```
 
-![](man/figures/unnamed-chunk-64-1.png)<!-- -->
+![](man/figures/unnamed-chunk-68-1.png)<!-- -->
 
 ### Step 1. compute
 
@@ -1878,7 +1965,7 @@ ggnorthcarolina::northcarolina_county_flat |>
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-70-1.png)<!-- -->
+![](man/figures/unnamed-chunk-74-1.png)<!-- -->
 
 ``` r
 
@@ -1891,7 +1978,7 @@ last_plot() +
 #> Joining with `by = join_by(fips)`
 ```
 
-![](man/figures/unnamed-chunk-70-2.png)<!-- -->
+![](man/figures/unnamed-chunk-74-2.png)<!-- -->
 
 ## geom\_candlestick summarize first, then interdependence …
 
@@ -1970,7 +2057,7 @@ p +
   stat_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-73-1.png)<!-- -->
+![](man/figures/unnamed-chunk-77-1.png)<!-- -->
 
 ``` r
 
@@ -1980,7 +2067,7 @@ p +
              size = 4)
 ```
 
-![](man/figures/unnamed-chunk-73-2.png)<!-- -->
+![](man/figures/unnamed-chunk-77-2.png)<!-- -->
 
 ``` r
 
@@ -1990,7 +2077,7 @@ p +
              hjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-73-3.png)<!-- -->
+![](man/figures/unnamed-chunk-77-3.png)<!-- -->
 
 ``` r
 
@@ -2003,7 +2090,7 @@ p +
 #> Ignoring unknown parameters: `label` and `hjust`
 ```
 
-![](man/figures/unnamed-chunk-73-4.png)<!-- -->
+![](man/figures/unnamed-chunk-77-4.png)<!-- -->
 
 ## stat\_waterfall: **1:1:1; compute\_panel; GeomRect, GeomText**
 
@@ -2058,7 +2145,7 @@ flow_df |>
   geom_waterfall_label()
 ```
 
-![](man/figures/unnamed-chunk-74-1.png)<!-- -->
+![](man/figures/unnamed-chunk-78-1.png)<!-- -->
 
 ``` r
 
@@ -2066,7 +2153,7 @@ last_plot() +
   aes(x = fct_reorder(event, change))
 ```
 
-![](man/figures/unnamed-chunk-74-2.png)<!-- -->
+![](man/figures/unnamed-chunk-78-2.png)<!-- -->
 
 ``` r
 
@@ -2074,7 +2161,7 @@ last_plot() +
   aes(x = fct_reorder(event, abs(change)))
 ```
 
-![](man/figures/unnamed-chunk-74-3.png)<!-- -->
+![](man/figures/unnamed-chunk-78-3.png)<!-- -->
 
 ## Bonus part 2. DAE with GeomText target
 
@@ -2121,7 +2208,7 @@ flow_df |>
   geom_waterfall_label()
 ```
 
-![](man/figures/unnamed-chunk-75-1.png)<!-- -->
+![](man/figures/unnamed-chunk-79-1.png)<!-- -->
 
 The final plot shows that while there are some convenience defaults for
 label and fill, these can be over-ridden.
@@ -2132,7 +2219,7 @@ last_plot() +
   aes(fill = NULL)
 ```
 
-![](man/figures/unnamed-chunk-76-1.png)<!-- -->
+![](man/figures/unnamed-chunk-80-1.png)<!-- -->
 
 # Piggyback on compute
 
@@ -2156,7 +2243,7 @@ ggplot(data = mtcars) +
 #> `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 ```
 
-![](man/figures/unnamed-chunk-77-1.png)<!-- --> \#\#\# Step 1. compute
+![](man/figures/unnamed-chunk-81-1.png)<!-- --> \#\#\# Step 1. compute
 
 ``` r
 compute_group_smooth_fit <- function(data, scales, method = NULL, formula = NULL,
@@ -2242,7 +2329,7 @@ ggplot(data = cars) +
   theme_chalkboard()
 ```
 
-![](man/figures/unnamed-chunk-82-1.png)<!-- -->
+![](man/figures/unnamed-chunk-86-1.png)<!-- -->
 
 ``` r
 
@@ -2250,7 +2337,7 @@ last_plot() +
   theme_chalkboard_slate()
 ```
 
-![](man/figures/unnamed-chunk-82-2.png)<!-- -->
+![](man/figures/unnamed-chunk-86-2.png)<!-- -->
 
 ``` r
 geoms_chalk_on <- function(color = "lightyellow", fill = color){
@@ -2278,7 +2365,7 @@ geoms_chalk_on()
 last_plot()
 ```
 
-![](man/figures/unnamed-chunk-84-1.png)<!-- -->
+![](man/figures/unnamed-chunk-88-1.png)<!-- -->
 
 # modified start points; ggverbatim(),
 
