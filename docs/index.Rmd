@@ -10,7 +10,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>", 
   eval = T,
-  cache = T,
+  cache = F,
   fig.path = "man/figures/") 
 ```
 

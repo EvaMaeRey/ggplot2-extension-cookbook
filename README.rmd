@@ -1248,23 +1248,26 @@ last_plot() +
 
 
 
-## geom_linear_parallel: **n:k:w; interdependence**
+## geom_ols_linear_parallel: **n:k:w; interdependence**
 
-*between-group computation*
+If you're a long time user of ggplot2, you'll probably have used geom_smooth. However, because geom_smooth estimates group-wise, that is, the modeling is done in the  compute_group step of the Stat's specification, when a categorical variable is mapped (to color or group for example), multiple models are computed and visualized. When you want to visualize a single model that contain a categorical (discrete) variable, then, geom_smooth won't be well suited to your problem. 
 
-# Step 1. Get the job done with ggplot2
+To start to think about extension in this space, we create geom_ols_linear_parallel, the simple case of an OLS model with a continuous and categorical independent variables, with no interaction and no higher order terms. This simple extension could be widely useful in in teaching and industry. Yet, this is a very specific use case; in the bonus material we'll discuss in how the extension strategy could be made usable for more modeling cases.
+
+### Step 1. Get the job done with ggplot2
 
 ```{r}
+penguins_df <- palmerpenguins::penguins |>
+  ggplot2::remove_missing()
+
 model_bill_length <- lm(bill_length_mm ~ 
                         bill_depth_mm + species, 
-                        data = palmerpenguins::penguins)
+                        data = penguins_df)
 
-penguins_w_fit_df <- palmerpenguins::penguins |>
-  select(bill_length_mm, bill_depth_mm, species) |>
-  ggplot2::remove_missing() |>
-  mutate(bill_length_fit = model_bill_length$fitted.values)
-
-ggplot(penguins_w_fit_df) +
+penguins_df |>
+  mutate(bill_length_fit =
+           model_bill_length$fitted.values) |>
+  ggplot() +
   aes(x = bill_depth_mm,
       y = bill_length_mm) +
   geom_point() + 
@@ -1298,7 +1301,7 @@ StatParallel <- ggplot2::ggproto(`_class` = "StatParallel",
 ### Step 3. Pass to user-facing function
 
 ```{r}
-geom_linear_parallel <- function(mapping = NULL, data = NULL,
+geom_ols_linear_parallel <- function(mapping = NULL, data = NULL,
                            position = "identity", na.rm = FALSE,
                            show.legend = NA,
                            inherit.aes = TRUE, ...) {
@@ -1323,7 +1326,7 @@ ggplot(palmerpenguins::penguins) +
   aes(x = bill_depth_mm, y = bill_length_mm,
       color = species, category = species) +
   geom_point() + 
-  geom_linear_parallel()
+  geom_ols_linear_parallel()
 ```
 
 
@@ -1334,7 +1337,7 @@ ggplot(palmerpenguins::penguins) +
 
 ### Step 0. get it done in base ggplot2
 
-Similar to our U.S. states example, where the state name is the 
+Similar to our U.S. states example, where the state name is the positional aesthetic...
 
 ```{r, include = F}
 library(tidyverse)
@@ -1478,6 +1481,117 @@ last_plot() +
 
 
 
+```
+
+
+### Exercise
+
+```{r}
+nc_geo_reference |> 
+  rename(fips = FIPS) |> 
+  full_join(ggnorthcarolina::northcarolina_county_flat) |> 
+  ggplot() + 
+  # geom_sf() + 
+  aes(fill = BIR79) + 
+  geom_sf_text(aes(label = NAME), 
+               check_overlap = T,
+               color = "gray80")
+```
+
+
+### Step 1 compute
+
+Prestep.
+
+```{r}
+ northcarolina_county_reference |>
+    dplyr::pull(geometry) |>
+    sf::st_zm() |>
+    sf::st_point_on_surface() ->
+  points_sf
+
+#https://github.com/r-spatial/sf/issues/231
+the_coords <- do.call(rbind, sf::st_geometry(points_sf)) %>%
+  tibble::as_tibble() %>% setNames(c("x","y"))
+
+
+nc_geo_reference_w_center_coords <- cbind(northcarolina_county_reference, the_coords)
+
+
+```
+
+
+```{r}
+compute_panel_county_label <- function(data, scales){
+  
+  data |>
+    dplyr::inner_join(nc_geo_reference_w_center_coords) 
+    
+
+}
+```
+
+
+### Step 2
+
+```{r}
+StatNcfipslabel <- ggplot2::ggproto(`_class` = "StatNcfipslabel",
+                                `_inherit` = ggplot2::Stat,
+                                required_aes = "fips|county_name",
+                                compute_panel = compute_panel_county_label,
+                               default_aes = 
+                                 aes(label = after_stat(county_name)))
+```
+
+### Step 3
+
+
+```{r}
+
+geom_county_label <- function(
+      mapping = NULL,
+      data = NULL,
+      position = "identity",
+      na.rm = FALSE,
+      show.legend = NA,
+      inherit.aes = TRUE,
+      crs = "NAD27", # "NAD27", 5070, "WGS84", "NAD83", 4326 , 3857
+      ...) {
+
+  c(ggplot2::layer_sf(
+              stat = StatNcfipslabel,  # proto object from step 2
+              geom = ggplot2::GeomText,  # inherit other behavior
+              data = data,
+              mapping = mapping,
+              position = position,
+              show.legend = show.legend,
+              inherit.aes = inherit.aes,
+              params = rlang::list2(na.rm = na.rm, ...)
+              ),
+              
+              coord_sf(crs = crs,
+                       default_crs = sf::st_crs(crs),
+                       datum = crs,
+                       default = TRUE)
+     )
+  }
+
+
+```
+
+
+### Step 4
+
+
+```{r}
+nc_county_info |>
+  ggplot() + 
+  aes(fips = fips) +
+  geom_county_label(size = 3)
+
+last_plot() + 
+  aes(label = BIR79) + 
+  geom_county(alpha = .2)
 ```
 
 
@@ -1731,7 +1845,7 @@ ggplot(data = mtcars) +
 
 ```
 
-# add default aesthetics
+## add default aesthetics
 
 ## geom_barlab:  Adding defaults to existing stats via ggproto editing
 

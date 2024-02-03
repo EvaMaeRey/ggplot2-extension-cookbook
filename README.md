@@ -88,15 +88,15 @@
           - [Step 3. Pass to user-facing
             function](#step-3-pass-to-user-facing-function-2)
           - [Step 4. Use/Test/Enjoy](#step-4-usetestenjoy-5)
-      - [geom\_lm\_parallel: **n:k:w;
-        interdependence**](#geom_lm_parallel-nkw-interdependence)
-  - [Step 1. Get the job done with
-    ggplot2](#step-1-get-the-job-done-with-ggplot2)
-      - [Step 2. Pass compute to ggproto
-        object](#step-2-pass-compute-to-ggproto-object)
-      - [Step 3. Pass to user-facing
-        function](#step-3-pass-to-user-facing-function-3)
-      - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-6)
+      - [geom\_ols\_linear\_parallel: **n:k:w;
+        interdependence**](#geom_ols_linear_parallel-nkw-interdependence)
+          - [Step 1. Get the job done with
+            ggplot2](#step-1-get-the-job-done-with-ggplot2)
+          - [Step 2. Pass compute to ggproto
+            object](#step-2-pass-compute-to-ggproto-object)
+          - [Step 3. Pass to user-facing
+            function](#step-3-pass-to-user-facing-function-3)
+          - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-6)
       - [geom\_county: **1:1:1, compute\_panel,
         GeomSf**](#geom_county-111-compute_panel-geomsf)
           - [Step 0. get it done in base
@@ -109,6 +109,11 @@
             check with
             CRSs*](#step-3-pass-to-user-facing-function-wrapping-ggplotlayer_sf-instead-of-ggplot2layer--more-check-with-crss)
           - [Step 4. Use/test/enjoy\!](#step-4-usetestenjoy-7)
+          - [Exercise](#exercise)
+          - [Step 1 compute](#step-1-compute-6)
+          - [Step 2](#step-2)
+          - [Step 3](#step-3)
+          - [Step 4](#step-4)
       - [geom\_candlestick summarize first, then interdependence
         …](#geom_candlestick-summarize-first-then-interdependence-)
   - [stat\_\* layers: keeping flexible via stat\_\*
@@ -125,9 +130,9 @@
       - [Borrowing compute](#borrowing-compute)
       - [geom\_smoothfit: **1:1:1** ggproto piggybacking on
         compute…](#geom_smoothfit-111-ggproto-piggybacking-on-compute)
-          - [Step 2](#step-2)
-          - [Step 3](#step-3)
-  - [add default aesthetics](#add-default-aesthetics)
+          - [Step 2](#step-2-1)
+          - [Step 3](#step-3-1)
+      - [add default aesthetics](#add-default-aesthetics)
       - [geom\_barlab: Adding defaults to existing stats via ggproto
         editing](#geom_barlab-adding-defaults-to-existing-stats-via-ggproto-editing)
   - [facet\_sample](#facet_sample)
@@ -1702,25 +1707,40 @@ last_plot() +
 
 ![](man/figures/unnamed-chunk-61-3.png)<!-- -->
 
-## geom\_lm\_parallel: **n:k:w; interdependence**
+## geom\_ols\_linear\_parallel: **n:k:w; interdependence**
 
-*between-group computation*
+If you’re a long time user of ggplot2, you’ll probably have used
+geom\_smooth. However, because geom\_smooth estimates group-wise, that
+is, the modeling is done in the compute\_group step of the Stat’s
+specification, when a categorical variable is mapped (to color or group
+for example), multiple models are computed and visualized. When you want
+to visualize a single model that contain a categorical (discrete)
+variable, then, geom\_smooth won’t be well suited to your problem.
 
-# Step 1. Get the job done with ggplot2
+To start to think about extension in this space, we create
+geom\_ols\_linear\_parallel, the simple case of an OLS model with a
+continuous and categorical independent variables, with no interaction
+and no higher order terms. This simple extension could be widely useful
+in in teaching and industry. Yet, this is a very specific use case; in
+the bonus material we’ll discuss in how the extension strategy could be
+made usable for more modeling cases.
+
+### Step 1. Get the job done with ggplot2
 
 ``` r
-model_bill_length <- lm(bill_length_mm ~ 
-                          bill_depth_mm + species, 
-                        data = palmerpenguins::penguins)
-
-penguins_w_fit_df <- palmerpenguins::penguins |>
-  select(bill_length_mm, bill_depth_mm, species) |>
-  ggplot2::remove_missing() |>
-  mutate(bill_length_fit = model_bill_length$fitted.values)
-#> Warning: Removed 2 rows containing missing values or values outside the scale
+penguins_df <- palmerpenguins::penguins |>
+  ggplot2::remove_missing()
+#> Warning: Removed 11 rows containing missing values or values outside the scale
 #> range.
 
-ggplot(penguins_w_fit_df) +
+model_bill_length <- lm(bill_length_mm ~ 
+                        bill_depth_mm + species, 
+                        data = penguins_df)
+
+penguins_df |>
+  mutate(bill_length_fit =
+           model_bill_length$fitted.values) |>
+  ggplot() +
   aes(x = bill_depth_mm,
       y = bill_length_mm) +
   geom_point() + 
@@ -1754,7 +1774,7 @@ StatParallel <- ggplot2::ggproto(`_class` = "StatParallel",
 ### Step 3. Pass to user-facing function
 
 ``` r
-geom_linear_parallel <- function(mapping = NULL, data = NULL,
+geom_ols_linear_parallel <- function(mapping = NULL, data = NULL,
                            position = "identity", na.rm = FALSE,
                            show.legend = NA,
                            inherit.aes = TRUE, ...) {
@@ -1778,7 +1798,7 @@ ggplot(palmerpenguins::penguins) +
   aes(x = bill_depth_mm, y = bill_length_mm,
       color = species, category = species) +
   geom_point() + 
-  geom_linear_parallel()
+  geom_ols_linear_parallel()
 #> Warning: Removed 2 rows containing non-finite outside the scale range
 #> (`stat_parallel()`).
 #> Warning: Removed 2 rows containing missing values or values outside the scale range
@@ -1794,6 +1814,7 @@ ggplot(palmerpenguins::penguins) +
 ### Step 0. get it done in base ggplot2
 
 Similar to our U.S. states example, where the state name is the
+positional aesthetic…
 
 ``` r
 # data to visualize
@@ -1980,6 +2001,130 @@ last_plot() +
 
 ![](man/figures/unnamed-chunk-74-2.png)<!-- -->
 
+### Exercise
+
+``` r
+nc_geo_reference |> 
+  rename(fips = FIPS) |> 
+  full_join(ggnorthcarolina::northcarolina_county_flat) |> 
+  ggplot() + 
+  # geom_sf() + 
+  aes(fill = BIR79) + 
+  geom_sf_text(aes(label = NAME), 
+               check_overlap = T,
+               color = "gray80")
+#> Joining with `by = join_by(fips, FIPSNO)`
+#> Warning in st_point_on_surface.sfc(sf::st_zm(x)): st_point_on_surface may not
+#> give correct results for longitude/latitude data
+```
+
+![](man/figures/unnamed-chunk-75-1.png)<!-- -->
+
+### Step 1 compute
+
+Prestep.
+
+``` r
+ northcarolina_county_reference |>
+    dplyr::pull(geometry) |>
+    sf::st_zm() |>
+    sf::st_point_on_surface() ->
+  points_sf
+#> Warning in
+#> st_point_on_surface.sfc(sf::st_zm(dplyr::pull(northcarolina_county_reference, :
+#> st_point_on_surface may not give correct results for longitude/latitude data
+
+#https://github.com/r-spatial/sf/issues/231
+the_coords <- do.call(rbind, sf::st_geometry(points_sf)) %>%
+  tibble::as_tibble() %>% setNames(c("x","y"))
+#> Warning: The `x` argument of `as_tibble.matrix()` must have unique column names if
+#> `.name_repair` is omitted as of tibble 2.0.0.
+#> ℹ Using compatibility `.name_repair`.
+#> This warning is displayed once every 8 hours.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
+
+
+nc_geo_reference_w_center_coords <- cbind(northcarolina_county_reference, the_coords)
+```
+
+``` r
+compute_panel_county_label <- function(data, scales){
+  
+  data |>
+    dplyr::inner_join(nc_geo_reference_w_center_coords) 
+    
+
+}
+```
+
+### Step 2
+
+``` r
+StatNcfipslabel <- ggplot2::ggproto(`_class` = "StatNcfipslabel",
+                                `_inherit` = ggplot2::Stat,
+                                required_aes = "fips|county_name",
+                                compute_panel = compute_panel_county_label,
+                               default_aes = 
+                                 aes(label = after_stat(county_name)))
+```
+
+### Step 3
+
+``` r
+
+geom_county_label <- function(
+      mapping = NULL,
+      data = NULL,
+      position = "identity",
+      na.rm = FALSE,
+      show.legend = NA,
+      inherit.aes = TRUE,
+      crs = "NAD27", # "NAD27", 5070, "WGS84", "NAD83", 4326 , 3857
+      ...) {
+
+  c(ggplot2::layer_sf(
+              stat = StatNcfipslabel,  # proto object from step 2
+              geom = ggplot2::GeomText,  # inherit other behavior
+              data = data,
+              mapping = mapping,
+              position = position,
+              show.legend = show.legend,
+              inherit.aes = inherit.aes,
+              params = rlang::list2(na.rm = na.rm, ...)
+              ),
+              
+              coord_sf(crs = crs,
+                       default_crs = sf::st_crs(crs),
+                       datum = crs,
+                       default = TRUE)
+     )
+  }
+```
+
+### Step 4
+
+``` r
+nc_county_info |>
+  ggplot() + 
+  aes(fips = fips) +
+  geom_county_label(size = 3)
+#> Joining with `by = join_by(fips)`
+```
+
+![](man/figures/unnamed-chunk-80-1.png)<!-- -->
+
+``` r
+
+last_plot() + 
+  aes(label = BIR79) + 
+  geom_county(alpha = .2)
+#> Joining with `by = join_by(fips)`
+#> Joining with `by = join_by(fips)`
+```
+
+![](man/figures/unnamed-chunk-80-2.png)<!-- -->
+
 ## geom\_candlestick summarize first, then interdependence …
 
 <!-- ## geom_pie: **n -> 1:1:1** -->
@@ -2057,7 +2202,7 @@ p +
   stat_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-77-1.png)<!-- -->
+![](man/figures/unnamed-chunk-83-1.png)<!-- -->
 
 ``` r
 
@@ -2067,7 +2212,7 @@ p +
              size = 4)
 ```
 
-![](man/figures/unnamed-chunk-77-2.png)<!-- -->
+![](man/figures/unnamed-chunk-83-2.png)<!-- -->
 
 ``` r
 
@@ -2077,7 +2222,7 @@ p +
              hjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-77-3.png)<!-- -->
+![](man/figures/unnamed-chunk-83-3.png)<!-- -->
 
 ``` r
 
@@ -2090,7 +2235,7 @@ p +
 #> Ignoring unknown parameters: `label` and `hjust`
 ```
 
-![](man/figures/unnamed-chunk-77-4.png)<!-- -->
+![](man/figures/unnamed-chunk-83-4.png)<!-- -->
 
 ## stat\_waterfall: **1:1:1; compute\_panel; GeomRect, GeomText**
 
@@ -2145,7 +2290,7 @@ flow_df |>
   geom_waterfall_label()
 ```
 
-![](man/figures/unnamed-chunk-78-1.png)<!-- -->
+![](man/figures/unnamed-chunk-84-1.png)<!-- -->
 
 ``` r
 
@@ -2153,7 +2298,7 @@ last_plot() +
   aes(x = fct_reorder(event, change))
 ```
 
-![](man/figures/unnamed-chunk-78-2.png)<!-- -->
+![](man/figures/unnamed-chunk-84-2.png)<!-- -->
 
 ``` r
 
@@ -2161,7 +2306,7 @@ last_plot() +
   aes(x = fct_reorder(event, abs(change)))
 ```
 
-![](man/figures/unnamed-chunk-78-3.png)<!-- -->
+![](man/figures/unnamed-chunk-84-3.png)<!-- -->
 
 ## Bonus part 2. DAE with GeomText target
 
@@ -2208,7 +2353,7 @@ flow_df |>
   geom_waterfall_label()
 ```
 
-![](man/figures/unnamed-chunk-79-1.png)<!-- -->
+![](man/figures/unnamed-chunk-85-1.png)<!-- -->
 
 The final plot shows that while there are some convenience defaults for
 label and fill, these can be over-ridden.
@@ -2219,7 +2364,7 @@ last_plot() +
   aes(fill = NULL)
 ```
 
-![](man/figures/unnamed-chunk-80-1.png)<!-- -->
+![](man/figures/unnamed-chunk-86-1.png)<!-- -->
 
 # Piggyback on compute
 
@@ -2243,7 +2388,7 @@ ggplot(data = mtcars) +
 #> `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 ```
 
-![](man/figures/unnamed-chunk-81-1.png)<!-- --> \#\#\# Step 1. compute
+![](man/figures/unnamed-chunk-87-1.png)<!-- --> \#\#\# Step 1. compute
 
 ``` r
 compute_group_smooth_fit <- function(data, scales, method = NULL, formula = NULL,
@@ -2284,7 +2429,7 @@ geom_smooth_predict <- function(xseq,  mapping = NULL, data = NULL, ..., method 
 }
 ```
 
-# add default aesthetics
+## add default aesthetics
 
 ## geom\_barlab: Adding defaults to existing stats via ggproto editing
 
@@ -2329,7 +2474,7 @@ ggplot(data = cars) +
   theme_chalkboard()
 ```
 
-![](man/figures/unnamed-chunk-86-1.png)<!-- -->
+![](man/figures/unnamed-chunk-92-1.png)<!-- -->
 
 ``` r
 
@@ -2337,7 +2482,7 @@ last_plot() +
   theme_chalkboard_slate()
 ```
 
-![](man/figures/unnamed-chunk-86-2.png)<!-- -->
+![](man/figures/unnamed-chunk-92-2.png)<!-- -->
 
 ``` r
 geoms_chalk_on <- function(color = "lightyellow", fill = color){
@@ -2365,7 +2510,7 @@ geoms_chalk_on()
 last_plot()
 ```
 
-![](man/figures/unnamed-chunk-88-1.png)<!-- -->
+![](man/figures/unnamed-chunk-94-1.png)<!-- -->
 
 # modified start points; ggverbatim(),
 
