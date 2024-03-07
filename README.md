@@ -97,8 +97,8 @@
           - [Step 3. Pass to user-facing
             function](#step-3-pass-to-user-facing-function-3)
           - [Step 4. Use/test/enjoy](#step-4-usetestenjoy-6)
-      - [geom\_county: **1:1:1, compute\_panel,
-        GeomSf**](#geom_county-111-compute_panel-geomsf)
+      - [geom\_county: \*\*1:1:1\*, compute\_panel,
+        GeomSf\*\*](#geom_county-111-compute_panel-geomsf)
           - [Step 0. get it done in base
             ggplot2](#step-0-get-it-done-in-base-ggplot2)
           - [Step 1. compute](#step-1-compute-5)
@@ -109,11 +109,14 @@
             check with
             CRSs*](#step-3-pass-to-user-facing-function-wrapping-ggplotlayer_sf-instead-of-ggplot2layer--more-check-with-crss)
           - [Step 4. Use/test/enjoy\!](#step-4-usetestenjoy-7)
-          - [Exercise](#exercise)
+      - [geom\_county\_label: **1:1:1; GeomText
+        **](#geom_county_label-111-geomtext-)
           - [Step 1 compute](#step-1-compute-6)
           - [Step 2](#step-2)
           - [Step 3](#step-3)
           - [Step 4](#step-4)
+          - [Exercise](#exercise)
+          - [Exercise](#exercise-1)
       - [geom\_candlestick summarize first, then interdependence
         …](#geom_candlestick-summarize-first-then-interdependence-)
   - [stat\_\* layers: keeping flexible via stat\_\*
@@ -137,6 +140,9 @@
         editing](#geom_barlab-adding-defaults-to-existing-stats-via-ggproto-editing)
   - [facet\_sample](#facet_sample)
   - [theme\_chalkboard()](#theme_chalkboard)
+  - [Coords](#coords)
+      - [coord\_page()](#coord_page)
+  - [coord\_poster()](#coord_poster)
   - [modified start points;
     ggverbatim(),](#modified-start-points-ggverbatim)
       - [ggverbatim()](#ggverbatim)
@@ -1284,7 +1290,8 @@ gapminder::gapminder |>
   filter(year == 2002) |> 
   ggplot() + 
   aes(id = country, area = pop/1000000) + 
-  geom_circlepack()
+  geom_circlepack() + 
+  coord_equal()
 #> Joining with `by = join_by(id)`
 ```
 
@@ -1517,17 +1524,17 @@ cars |>
 
 ``` r
 
-data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3, rotation = 0) %>% 
+data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>% 
   mutate(group = row_number()) %>% 
-  tidyr::crossing(around = 0:15/15) %>%
+  tidyr::crossing(vertex_index = 0:15/15) %>%
     dplyr::mutate(
       y = y0 + r * (
-        .85 * cos(2*pi*around)
-        - .35 * cos(2 * 2*pi*around)
-        - .25 * cos(3 * 2*pi*around)
-        - .05 * cos(4 * 2*pi*around)
-      ) - rotation * pi,
-      x = x0 + r * (sin(2*pi*around)^3) - rotation * pi) %>% 
+        .85 * cos(2*pi*vertex_index)
+        - .35 * cos(2 * 2*pi*vertex_index)
+        - .25 * cos(3 * 2*pi*vertex_index)
+        - .05 * cos(4 * 2*pi*vertex_index)
+      ),
+      x = x0 + r * (sin(2*pi*vertex_index)^3)) %>% 
   ggplot() +
    aes(x = x, y = y, group = group) + 
   geom_polygon(alpha = .5, fill = "darkred") + 
@@ -1795,8 +1802,10 @@ geom_ols_linear_parallel <- function(mapping = NULL, data = NULL,
 
 ``` r
 ggplot(palmerpenguins::penguins) +
-  aes(x = bill_depth_mm, y = bill_length_mm,
-      color = species, category = species) +
+  aes(x = bill_depth_mm, 
+      y = bill_length_mm,
+      color = species, 
+      category = species) +
   geom_point() + 
   geom_ols_linear_parallel()
 #> Warning: Removed 2 rows containing non-finite outside the scale range
@@ -1807,7 +1816,7 @@ ggplot(palmerpenguins::penguins) +
 
 ![](man/figures/unnamed-chunk-66-1.png)<!-- -->
 
-## geom\_county: **1:1:1, compute\_panel, GeomSf**
+## geom\_county: \*\*1:1:1\*, compute\_panel, GeomSf\*\*
 
 *a geom defined by an sf geometry column*
 
@@ -2001,7 +2010,7 @@ last_plot() +
 
 ![](man/figures/unnamed-chunk-74-2.png)<!-- -->
 
-### Exercise
+## geom\_county\_label: **1:1:1; GeomText **
 
 ``` r
 nc_geo_reference |> 
@@ -2125,6 +2134,22 @@ last_plot() +
 
 ![](man/figures/unnamed-chunk-80-2.png)<!-- -->
 
+### Exercise
+
+Use a *common* STAT to create geom\_estado and geom\_estado\_label
+
+``` r
+geo_ref_data_raw <- rnaturalearth::ne_countries(  
+  scale = "medium", returnclass = "sf") %>%  
+  select(name, continent, geometry) %>% 
+  rename(country_name = name)
+```
+
+### Exercise
+
+Use sf data to create another set of useful layers for making
+choropleths
+
 ## geom\_candlestick summarize first, then interdependence …
 
 <!-- ## geom_pie: **n -> 1:1:1** -->
@@ -2202,7 +2227,7 @@ p +
   stat_chull(alpha = .3)
 ```
 
-![](man/figures/unnamed-chunk-83-1.png)<!-- -->
+![](man/figures/unnamed-chunk-85-1.png)<!-- -->
 
 ``` r
 
@@ -2212,7 +2237,7 @@ p +
              size = 4)
 ```
 
-![](man/figures/unnamed-chunk-83-2.png)<!-- -->
+![](man/figures/unnamed-chunk-85-2.png)<!-- -->
 
 ``` r
 
@@ -2222,7 +2247,7 @@ p +
              hjust = 0)
 ```
 
-![](man/figures/unnamed-chunk-83-3.png)<!-- -->
+![](man/figures/unnamed-chunk-85-3.png)<!-- -->
 
 ``` r
 
@@ -2235,7 +2260,7 @@ p +
 #> Ignoring unknown parameters: `label` and `hjust`
 ```
 
-![](man/figures/unnamed-chunk-83-4.png)<!-- -->
+![](man/figures/unnamed-chunk-85-4.png)<!-- -->
 
 ## stat\_waterfall: **1:1:1; compute\_panel; GeomRect, GeomText**
 
@@ -2290,7 +2315,7 @@ flow_df |>
   geom_waterfall_label()
 ```
 
-![](man/figures/unnamed-chunk-84-1.png)<!-- -->
+![](man/figures/unnamed-chunk-86-1.png)<!-- -->
 
 ``` r
 
@@ -2298,7 +2323,7 @@ last_plot() +
   aes(x = fct_reorder(event, change))
 ```
 
-![](man/figures/unnamed-chunk-84-2.png)<!-- -->
+![](man/figures/unnamed-chunk-86-2.png)<!-- -->
 
 ``` r
 
@@ -2306,7 +2331,7 @@ last_plot() +
   aes(x = fct_reorder(event, abs(change)))
 ```
 
-![](man/figures/unnamed-chunk-84-3.png)<!-- -->
+![](man/figures/unnamed-chunk-86-3.png)<!-- -->
 
 ## Bonus part 2. DAE with GeomText target
 
@@ -2353,7 +2378,7 @@ flow_df |>
   geom_waterfall_label()
 ```
 
-![](man/figures/unnamed-chunk-85-1.png)<!-- -->
+![](man/figures/unnamed-chunk-87-1.png)<!-- -->
 
 The final plot shows that while there are some convenience defaults for
 label and fill, these can be over-ridden.
@@ -2364,7 +2389,7 @@ last_plot() +
   aes(fill = NULL)
 ```
 
-![](man/figures/unnamed-chunk-86-1.png)<!-- -->
+![](man/figures/unnamed-chunk-88-1.png)<!-- -->
 
 # Piggyback on compute
 
@@ -2388,7 +2413,7 @@ ggplot(data = mtcars) +
 #> `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 ```
 
-![](man/figures/unnamed-chunk-87-1.png)<!-- --> \#\#\# Step 1. compute
+![](man/figures/unnamed-chunk-89-1.png)<!-- --> \#\#\# Step 1. compute
 
 ``` r
 compute_group_smooth_fit <- function(data, scales, method = NULL, formula = NULL,
@@ -2439,24 +2464,23 @@ geom_smooth_predict <- function(xseq,  mapping = NULL, data = NULL, ..., method 
 
 ``` r
 
-theme_chalkboard <- function(board_color = "darkseagreen4", chalk_color = "lightyellow"){
+theme_chalkboard <- function(board_color = "darkseagreen4",
+                             chalk_color = "lightyellow", ...){
 
-  list(
-    ggplot2::theme(rect = ggplot2::element_rect(fill =
-                                                  board_color)),
-    ggplot2::theme(text = ggplot2::element_text(color = chalk_color,
-                                                face = "italic",
-                                                size = 15)),
-    ggplot2::theme(panel.background =
-                     ggplot2::element_rect(fill = board_color)),
-    ggplot2::theme(legend.key = ggplot2::element_blank()),
-    ggplot2::theme(legend.title = ggplot2::element_blank()),
-    ggplot2::theme(axis.text =
-                     ggplot2::element_text(color = chalk_color)),
-    ggplot2::theme(axis.ticks =
-                     ggplot2::element_line(color = chalk_color)),
-    ggplot2::theme(panel.grid = ggplot2::element_blank())
-  )
+  ggplot2::theme_gray(...) %+replace%   ##<< we'll piggy back on an existing theme
+    ggplot2::theme(
+      rect = ggplot2::element_rect(fill = board_color,
+                                   color = board_color),
+      text = ggplot2::element_text(color = chalk_color,
+                                   face = "italic",
+                                   size = 18),
+      panel.background = ggplot2::element_rect(fill = board_color,
+                                               color = board_color),
+      axis.text = ggplot2::element_text(color = chalk_color),
+      axis.ticks = ggplot2::element_line(color = chalk_color),
+      panel.grid = ggplot2::element_blank(),
+      complete = TRUE   ##<< important, see 20.1.2 Complete themes in ggplot2 book
+      )
 
 }
 
@@ -2474,7 +2498,7 @@ ggplot(data = cars) +
   theme_chalkboard()
 ```
 
-![](man/figures/unnamed-chunk-92-1.png)<!-- -->
+![](man/figures/unnamed-chunk-94-1.png)<!-- -->
 
 ``` r
 
@@ -2482,35 +2506,90 @@ last_plot() +
   theme_chalkboard_slate()
 ```
 
-![](man/figures/unnamed-chunk-92-2.png)<!-- -->
+![](man/figures/unnamed-chunk-94-2.png)<!-- -->
+
+See ggchalkboard for geoms\_chalk\_on() and geoms\_chalk\_off().
+
+# Coords
+
+## coord\_page()
+
+One easily created new coord function is the coord\_page(). Here we just
+wrap the coord\_trans function and setting y to be reversed. Therefore,
+our coordinate system will be set up more like a note page where we
+count lines from top to bottom instead of a Cartesian coordinate system
+which counts from bottom to top.
 
 ``` r
-geoms_chalk_on <- function(color = "lightyellow", fill = color){
-
-  # https://stackoverflow.com/questions/21174625/ggplot-how-to-set-default-color-for-all-geoms
-
-  ggplot2::update_geom_defaults("point",   list(colour = color, size = 2.5, alpha = .75))
-  ggplot2::update_geom_defaults("segment",   list(colour = color, size = 1.25, alpha = .75))
-  ggplot2::update_geom_defaults("rug",   list(colour = color, size = 1, alpha = .75))
-  ggplot2::update_geom_defaults("rect",   list(colour = color, size = 1, alpha = .75))
-  ggplot2::update_geom_defaults("label",   list(fill = fill, color = "grey35", size = 5))
-
-  # params <- ls(pattern = '^geom_', env = as.environment('package:ggxmean'))
-  # geoms <- gsub("geom_", "", params)
-  #
-  # lapply(geoms, update_geom_defaults, list(colour = "oldlace"))
-  # lapply(geoms, update_geom_defaults, list(colour = "oldlace"))
-
+coord_page <- function(...){
+  
+  coord_trans(y = "reverse", ...)
+  
 }
 ```
 
+# coord\_poster()
+
+Similar to the properties of coord\_page(), our aim with creating
+coord\_poster() is to have vertical positioning go from top to bottom,
+but also to have the aspect ratio to be 1 (horizontal 1 unit is equal to
+one vertical move). It’s between coord\_equal() X coord\_page()
+
 ``` r
-geoms_chalk_on()
-
-last_plot()
+coord_equal
+#> function (ratio = 1, xlim = NULL, ylim = NULL, expand = TRUE, 
+#>     clip = "on") 
+#> {
+#>     check_coord_limits(xlim)
+#>     check_coord_limits(ylim)
+#>     ggproto(NULL, CoordFixed, limits = list(x = xlim, y = ylim), 
+#>         ratio = ratio, expand = expand, clip = clip)
+#> }
+#> <bytecode: 0x7f9ca7f1fa18>
+#> <environment: namespace:ggplot2>
+CoordCartesian$transform
+#> <ggproto method>
+#>   <Wrapper function>
+#>     function (...) 
+#> transform(...)
+#> 
+#>   <Inner function (f)>
+#>     function (data, panel_params) 
+#> {
+#>     data <- transform_position(data, panel_params$x$rescale, 
+#>         panel_params$y$rescale)
+#>     transform_position(data, squish_infinite, squish_infinite)
+#> }
+CoordCartesian$aspect
+#> <ggproto method>
+#>   <Wrapper function>
+#>     function (...) 
+#> aspect(...)
+#> 
+#>   <Inner function (f)>
+#>     function (ranges) 
+#> NULL
+CoordCartesian$range
+#> <ggproto method>
+#>   <Wrapper function>
+#>     function (...) 
+#> range(...)
+#> 
+#>   <Inner function (f)>
+#>     function (panel_params) 
+#> {
+#>     list(x = panel_params$x$dimension(), y = panel_params$y$dimension())
+#> }
+CoordFixed$is_free
+#> <ggproto method>
+#>   <Wrapper function>
+#>     function (...) 
+#> is_free(...)
+#> 
+#>   <Inner function (f)>
+#>     function () 
+#> FALSE
 ```
-
-![](man/figures/unnamed-chunk-94-1.png)<!-- -->
 
 # modified start points; ggverbatim(),
 

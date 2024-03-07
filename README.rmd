@@ -932,7 +932,8 @@ gapminder::gapminder |>
   filter(year == 2002) |> 
   ggplot() + 
   aes(id = country, area = pop/1000000) + 
-  geom_circlepack()
+  geom_circlepack() + 
+  coord_equal()
 
 last_plot() + 
   aes(fill = continent) 
@@ -1114,22 +1115,21 @@ cars |>
 
 ```{r}
 
-data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3, rotation = 0) %>% 
+data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>% 
   mutate(group = row_number()) %>% 
-  tidyr::crossing(around = 0:15/15) %>%
+  tidyr::crossing(vertex_index = 0:15/15) %>%
     dplyr::mutate(
       y = y0 + r * (
-        .85 * cos(2*pi*around)
-        - .35 * cos(2 * 2*pi*around)
-        - .25 * cos(3 * 2*pi*around)
-        - .05 * cos(4 * 2*pi*around)
-      ) - rotation * pi,
-      x = x0 + r * (sin(2*pi*around)^3) - rotation * pi) %>% 
+        .85 * cos(2*pi*vertex_index)
+        - .35 * cos(2 * 2*pi*vertex_index)
+        - .25 * cos(3 * 2*pi*vertex_index)
+        - .05 * cos(4 * 2*pi*vertex_index)
+      ),
+      x = x0 + r * (sin(2*pi*vertex_index)^3)) %>% 
   ggplot() +
    aes(x = x, y = y, group = group) + 
   geom_polygon(alpha = .5, fill = "darkred") + 
   coord_equal()
-
 ```
 
 
@@ -1323,15 +1323,17 @@ geom_ols_linear_parallel <- function(mapping = NULL, data = NULL,
 
 ```{r}
 ggplot(palmerpenguins::penguins) +
-  aes(x = bill_depth_mm, y = bill_length_mm,
-      color = species, category = species) +
+  aes(x = bill_depth_mm, 
+      y = bill_length_mm,
+      color = species, 
+      category = species) +
   geom_point() + 
   geom_ols_linear_parallel()
 ```
 
 
 
-## geom_county: **1:1:1, compute_panel, GeomSf**
+## geom_county: **1:1:1*, compute_panel, GeomSf**
 
 *a geom defined by an sf geometry column*
 
@@ -1484,7 +1486,7 @@ last_plot() +
 ```
 
 
-### Exercise
+## geom_county_label: **1:1:1; GeomText **
 
 ```{r}
 nc_geo_reference |> 
@@ -1595,7 +1597,31 @@ last_plot() +
 ```
 
 
+### Exercise 
+
+Use a *common* STAT to create geom_estado and geom_estado_label
+
+```{r, eval = F}
+geo_ref_data_raw <- rnaturalearth::ne_countries(  
+  scale = "medium", returnclass = "sf") %>%  
+  select(name, continent, geometry) %>% 
+  rename(country_name = name)
+```
+
+
+
+### Exercise
+
+Use sf data to create another set of useful layers for making choropleths 
+
+```{r}
+
+
+```
+
 ## geom_candlestick summarize first, then interdependence ...
+
+
 
 ```{r}
 ```
@@ -1861,24 +1887,23 @@ ggplot(data = mtcars) +
 
 ```{r}
 
-theme_chalkboard <- function(board_color = "darkseagreen4", chalk_color = "lightyellow"){
+theme_chalkboard <- function(board_color = "darkseagreen4",
+                             chalk_color = "lightyellow", ...){
 
-  list(
-    ggplot2::theme(rect = ggplot2::element_rect(fill =
-                                                  board_color)),
-    ggplot2::theme(text = ggplot2::element_text(color = chalk_color,
-                                                face = "italic",
-                                                size = 15)),
-    ggplot2::theme(panel.background =
-                     ggplot2::element_rect(fill = board_color)),
-    ggplot2::theme(legend.key = ggplot2::element_blank()),
-    ggplot2::theme(legend.title = ggplot2::element_blank()),
-    ggplot2::theme(axis.text =
-                     ggplot2::element_text(color = chalk_color)),
-    ggplot2::theme(axis.ticks =
-                     ggplot2::element_line(color = chalk_color)),
-    ggplot2::theme(panel.grid = ggplot2::element_blank())
-  )
+  ggplot2::theme_gray(...) %+replace%   ##<< we'll piggy back on an existing theme
+    ggplot2::theme(
+      rect = ggplot2::element_rect(fill = board_color,
+                                   color = board_color),
+      text = ggplot2::element_text(color = chalk_color,
+                                   face = "italic",
+                                   size = 18),
+      panel.background = ggplot2::element_rect(fill = board_color,
+                                               color = board_color),
+      axis.text = ggplot2::element_text(color = chalk_color),
+      axis.ticks = ggplot2::element_line(color = chalk_color),
+      panel.grid = ggplot2::element_blank(),
+      complete = TRUE   ##<< important, see 20.1.2 Complete themes in ggplot2 book
+      )
 
 }
 
@@ -1901,35 +1926,34 @@ last_plot() +
 
 ```
 
+See ggchalkboard for geoms_chalk_on() and geoms_chalk_off().
+
+
+# Coords
+
+## coord_page()
+
+One easily created new coord function is the coord_page(). Here we just wrap the coord_trans function and setting y to be reversed.  Therefore, our coordinate system will be set up more like a note page where we count lines from top to bottom instead of a Cartesian coordinate system which counts from bottom to top.  
 
 ```{r}
-geoms_chalk_on <- function(color = "lightyellow", fill = color){
-
-  # https://stackoverflow.com/questions/21174625/ggplot-how-to-set-default-color-for-all-geoms
-
-  ggplot2::update_geom_defaults("point",   list(colour = color, size = 2.5, alpha = .75))
-  ggplot2::update_geom_defaults("segment",   list(colour = color, size = 1.25, alpha = .75))
-  ggplot2::update_geom_defaults("rug",   list(colour = color, size = 1, alpha = .75))
-  ggplot2::update_geom_defaults("rect",   list(colour = color, size = 1, alpha = .75))
-  ggplot2::update_geom_defaults("label",   list(fill = fill, color = "grey35", size = 5))
-
-  # params <- ls(pattern = '^geom_', env = as.environment('package:ggxmean'))
-  # geoms <- gsub("geom_", "", params)
-  #
-  # lapply(geoms, update_geom_defaults, list(colour = "oldlace"))
-  # lapply(geoms, update_geom_defaults, list(colour = "oldlace"))
-
+coord_page <- function(...){
+  
+  coord_trans(y = "reverse", ...)
+  
 }
 ```
 
+# coord_poster()
+
+Similar to the properties of coord_page(), our aim with creating coord_poster() is to have vertical positioning go from top to bottom, but also to have the aspect ratio to be 1 (horizontal 1 unit is equal to one vertical move).  It's between coord_equal() X coord_page()
 
 ```{r}
-geoms_chalk_on()
-
-last_plot()
+coord_equal
+CoordCartesian$transform
+CoordCartesian$aspect
+CoordCartesian$range
+CoordFixed$is_free
 ```
-
-
 
 # modified start points; ggverbatim(),
 
