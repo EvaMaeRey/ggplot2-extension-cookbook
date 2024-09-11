@@ -385,12 +385,8 @@ incredible insights and acting on them.
 # Getting started
 
 For best results, I’d recommend *diving* in by actually creating some
-geoms as prompted in the ‘easy geom recipes’ tutorial using the rendered
-[tutorial](https://evamaerey.github.io/easy-geom-recipes/easy_geom_recipes_compute_group.html)
-or [text .Rmd
-file](https://raw.githubusercontent.com/EvaMaeRey/easy-geom-recipes/main/easy_geom_recipes_compute_group.Rmd).
-The ‘easy recipes’ contain 3 fully worked examples, and 3 exercises that
-extend the lessons in the examples.
+geoms as prompted in the ‘easy geom recipes’ tutorial using the web
+[tutorial](https://evamaerey.github.io/easy-geom-recipes/tutorial-preview.html).
 
 Having completed these exercises, you’ll have lived geom creations from
 start to finish, will be well oriented to the consistent patterns I use,
@@ -2549,7 +2545,7 @@ coord_equal
 #>     ggproto(NULL, CoordFixed, limits = list(x = xlim, y = ylim), 
 #>         ratio = ratio, expand = expand, clip = clip)
 #> }
-#> <bytecode: 0x7f898363ebd0>
+#> <bytecode: 0x7ff5490d7638>
 #> <environment: namespace:ggplot2>
 ```
 

@@ -131,12 +131,9 @@ And finally, finally to Hadley Wickham and Leland Wilkinson having incredible in
 
 # Getting started
 
-For best results, I'd recommend *diving* in by actually creating some geoms as prompted in the 'easy geom recipes' tutorial using the rendered [tutorial](https://evamaerey.github.io/easy-geom-recipes/easy_geom_recipes_compute_group.html) or [text .Rmd file](https://raw.githubusercontent.com/EvaMaeRey/easy-geom-recipes/main/easy_geom_recipes_compute_group.Rmd). The 'easy recipes' contain 3 fully worked examples, and 3 exercises that extend the lessons in the examples.
+For best results, I'd recommend *diving* in by actually creating some geoms as prompted in the 'easy geom recipes' tutorial using the web [tutorial](https://evamaerey.github.io/easy-geom-recipes/tutorial-preview.html). 
 
 Having completed these exercises, you'll have lived geom creations from start to finish, will be well oriented to the consistent patterns I use, to the extent possible, throughout the cookbook. 
-
-
-
 
 
 ```{r, echo = F, warning=F, message=F}
@@ -147,18 +144,20 @@ steps <- c("Step 0:\nget job done with 'base' ggplot2",
 "Step 3:\nPass ggproto to user-facing function",
 "Step 4:\nTry out/test/enjoy!") 
 library(ggraph)
+library(tidyverse)
 
 tibble(steps = rev(steps)) |> 
   mutate(lag(steps)) |> 
   remove_missing() |> 
   ggedgelist:::ggedgelist(layout = "tree") + 
   ggraph:::geom_edge_link(color = "orange") +
-  ggraph:::geom_node_point(size = 14,
-                  color = "steelblue",
-                  alpha = .8) + 
+  # ggraph:::geom_node_point(size = 14,
+  #                 color = "steelblue",
+  #                 alpha = .8) + 
   ggraph:::geom_node_label(aes(label = name), size = 6,
                            color = "steelblue",
-                  alpha = .95)
+                  alpha = .95) + 
+  scale_y_continuous(expand = expansion(.1))
 
 # ggcanvas() + 
 #   stamp_label(label = "Step 0:\nuse 'base' ggplot2", x = 0, y = 0, hjust = 0) + 
