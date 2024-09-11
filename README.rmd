@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 library(tidyverse)
 ```
 
-# ggplot2-extension-cookbook
+# ggplot2 extension cookbook 🫖
 
 <!-- badges: start -->
 <!-- badges: end -->

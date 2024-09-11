@@ -1,5 +1,5 @@
 
-- [ggplot2-extension-cookbook](#ggplot2-extension-cookbook)
+- [ggplot2 extension cookbook 🫖](#ggplot2-extension-cookbook-)
 - [Preface and acknowledgements](#preface-and-acknowledgements)
 - [Getting started](#getting-started)
 - [easy geom\_\* functions: writing new definitions for where and how of
@@ -130,7 +130,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# ggplot2-extension-cookbook
+# ggplot2 extension cookbook 🫖
 
 <!-- badges: start -->
 <!-- badges: end -->
@@ -2549,7 +2549,7 @@ coord_equal
 #>     ggproto(NULL, CoordFixed, limits = list(x = xlim, y = ylim), 
 #>         ratio = ratio, expand = expand, clip = clip)
 #> }
-#> <bytecode: 0x7f78bb7fb5d8>
+#> <bytecode: 0x7f898363ebd0>
 #> <environment: namespace:ggplot2>
 ```
 

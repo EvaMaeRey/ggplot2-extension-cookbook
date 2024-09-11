@@ -14,5 +14,95 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/") 
 ```
 
+```{css, echo=FALSE}
+
+#main .nav-pills > li.active > a,
+#main .nav-pills > li.active > a:hover,
+#main .nav-pills > li.active > a:focus {
+    background-color: #416287;
+}
+
+#nav-top span.glyphicon {
+    color: #416287;
+}
+
+#sidebar {
+
+  background: #eeeeee;
+
+}
+
+ 
+
+#sidebar a {
+
+    color: #416287;
+
+}
+
+ 
+#main .nav-pills > li > a:hover {
+    background-color: #416287;
+} 
+ 
+
+#sidebar a:hover {
+
+    background-color: #416287;
+
+    color: #f3f6f4;
+
+}
+
+ 
+
+#sidebar h2 {
+
+    background-color: #416287;
+
+    color: #f3f6f4
+
+}
+
+ 
+
+.title {
+
+  text-align: center;
+
+  size: 60px;
+
+    color: #f3f6f4
+
+}
+
+ 
+
+.subtitle {
+
+  color: #416287;
+
+}
+
+ 
+
+h2, h3, h4, h5, h6, legend {
+
+  color: #416287;
+
+}
+
+ 
+
+ 
+
+h1 {
+
+    color: #416287
+
+}
+
+``` 
+
 ```{r, child = "README.rmd"}
 ```
