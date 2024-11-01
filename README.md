@@ -358,7 +358,8 @@ narrative form. In mocking up this book, I’m using code chunk options
 like `child = '../my_gg_experiments/my_extension_ideas.'` and
 `code = '../ggwaterfall/R/geom_waterfall'.` It is a great help not to
 have to pull up files and copy and paste. I’m very grateful to Yihui Xie
-for his insights and efforts at making this possible.
+and the R markdown team for the insights and efforts at making this
+possible.
 
 I’m personally grateful to other ggplot2 extenders and R enthusiasts
 that have supported this journey.
@@ -2561,7 +2562,7 @@ coord_equal
 #>     ggproto(NULL, CoordFixed, limits = list(x = xlim, y = ylim), 
 #>         ratio = ratio, expand = expand, clip = clip)
 #> }
-#> <bytecode: 0x7f8b5acca7c0>
+#> <bytecode: 0x7f9867605160>
 #> <environment: namespace:ggplot2>
 ```
 
