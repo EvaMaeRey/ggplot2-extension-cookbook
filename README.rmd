@@ -305,6 +305,8 @@ data |>
 }
 ```
 
+#### Test Compute
+
 Before we move on, it's a good idea to check out that our function is working on its own.  To use the function, remember that we need a dataframe with the expected variables, `x` and `y`.  We can test the function with the cars dataset, but first we modify the data (that has variable names `speed` and `dist`) with the rename function. 
 
 ```{r}
@@ -314,15 +316,10 @@ cars |>
   head()
 ```
 
-```{r}
 
 
 
-```
-
-
-
-### Step 2: pass to ggproto object
+### Step 2: Define Stat object
 
 The next step toward our user-facing function is to create a new Stat, which is a ggproto object.  Fortunately, this is a subclass of the ggplot2::Stat Class, and we will inherit much behavior from that class.  This means that definition of our class `StatCoordinate`, is quite straightforward.  For our target function, beyond creating the new class and declaring the inheritance, we'll need to 1) specify the required aesthetics and 2) pass our compute function to a compute slot.  The slot we're using for our coordinates case is compute_group.  Therefore, the compute will be done by group if any discrete variable (non-numeric) is mapped from the data.  The consequences of using the compute_group slot (verse other slots) will become more important in future examples.  Returning to the topic of required_aes, the coordinates label can always be created from x and y as an input, and we know that our compute function uses both variables named 'x' and 'y' in it's computation.
 
@@ -335,16 +332,25 @@ StatCoordinate <- ggplot2::ggproto(
   )
 ```
 
+#### Test.
 
-
-### Step 3. Write user facing function.
-
-In Step 3, we're close to our goal of a user-facing function for familiar ggplot2 builds.
-
-Under the hood, we'll pass our new Stat, StatCoordinate, to ggplot2's `layer()` function.  `ggplot2::layer()` is may not be familiar, but it can be used directly in ggplot() pipelines.  We pass our StatCoordinate ggproto object to the stat argument, handling the computation (adding a column of data containing coordinates and called 'label').  Additionally the ggplot2::GeomText object to the geom argument.  The 'geometry' or 'mark' on the plot therefore will be of the 'text' type.   
+Here we can use geom_text on it's own to test out our new stat. 
 
 ```{r}
-# part 3.0 use ggplot2::layer which requires specifying Geom and Stat
+cars |>
+  ggplot() + 
+  aes(x = speed, y = dist) + 
+  geom_point() + 
+  geom_text(stat = StatCoordinate, 
+            check_overlap = T,
+            hjust = 0,
+            vjust = 0)
+```
+
+
+Alternatively, we could test out our Stat with the `layer()` function and specify both the Stat and the Geom.  An input is also required for the position argument. This gets us closer to defining our user-facing function.
+
+```{r}
 ggplot(data = cars) + 
   aes(x = speed, y = dist) + 
   geom_point() + 
@@ -355,20 +361,28 @@ ggplot(data = cars) +
     )
 ```
 
-You are probably more familiar with `geom_*()` and `stat_*` functions which wrap the ggplot2::layer() function; these generally have a fixed geom or stat.  In create `geom_text_coordinate()`, because the use-scope is so narrow, both the stat and geom are 'hard-coded' in the layer; i.e. stat and geom are not arguments in the geom_* function.  Here's how we specify our `geom_text_coordinate()`:
+
+### Step 3. Write user facing function.
+
+In Step 3, we're close to our goal of a user-facing function for familiar ggplot2 builds.
+
+Under the hood, we'll pass our new Stat, StatCoordinate, to ggplot2's `layer()` function.  `ggplot2::layer()` is may not be familiar, but it can be used directly in ggplot() pipelines. 
+
+Here's how we specify our `stat_text_coordinate()`.  For users that prefer functions with the geom_* prefix, we alias to `geom_text_coordinate()` as well.
 
 ```{r}
 # part b. create geom_* user-facing function using g
-geom_text_coordinate <- function(mapping = NULL, 
+stat_text_coordinate <- function(mapping = NULL, 
                                  data = NULL,
+                                 geom = ggplot2::GeomText,
                                  position = "identity",
                                  show.legend = NA,
                                  inherit.aes = TRUE, 
                                  na.rm = FALSE,
                                  ...) {
   ggplot2::layer(
+    geom = geom, 
     stat = StatCoordinate,
-    geom = ggplot2::GeomText, 
     position = position,
     mapping = mapping,
     data = data,
@@ -378,12 +392,13 @@ geom_text_coordinate <- function(mapping = NULL,
   )
 }
 
-
+# alias
+geom_text_coordinate <- stat_text_coordinate
 ```
 
 You will see a few more arguments in play here: `mapping`, `data`, `position`, `show.legend`, etc..  We do anticipate that the user might want to have control over the data and aesthetic mapping specific to layer (rather than deriving them from global declarations), and therefore make the mapping and data arguments available.  Furthermore, the position, show.legend, inherit.aes, and na.rm arguments are made available in the geom as shown below.  The ellipsis allows you to leverage even more functionality.  In sum, this makes `geom_text_coordinate()` work very much like `geom_text()` --- you can use all the same arguments you'd use with geom_text() --- except that the label aesthetic is computed under the hood, and vanilla `geom_text()` requires you to specify the label aesthetic.  For example, you can use the argument `check_overlap` in `geom_text_coordinate()`, as you might do in `geom_text()`.
 
-#### Use/test/enjoy
+#### Test
 
 Good news, we're at Step 4! You created a function for use in a ggplot2 pipeline and now you can use it!  Remember, you can basically use geom_text_coordinate in the same was as geom_text, because the geom argument in the layer() function is geom = GeomText, so arguments like check_overlap that are usable in geom_text will be meaningful our new function! The difference, of course, is that the label aesthetic is computed for you -- so you don't need that aesthetic which would be required for the vanilla geom_text() function.
 
@@ -434,6 +449,7 @@ compute_group_post <- function(data, scales){
 }
 ```
 
+#### Test
 
 ```{r}
 probs_df |>
@@ -442,7 +458,7 @@ probs_df |>
 ```
 
 
-### Step 2: Pass to ggproto
+### Step 2: Define Stat
 
 ```{r}
 StatPost <- ggplot2::ggproto("StatPost",
@@ -453,31 +469,30 @@ StatPost <- ggplot2::ggproto("StatPost",
 
 ```
 
-Testing with layer() or geom_*()
+#### Testing with layer() or geom_*()
 
 ```{r}
 ggplot(data = probs_df) + 
   aes(x = outcome, y = prob) + 
   geom_point() +
   geom_segment(stat = StatPost)
-
-
 ```
 
 
 ### Step 3: Pass to user-facing function using ggplot2::layer()
 
 ```{r}
-geom_post <- function(mapping = NULL, 
-                          data = NULL,
-                          position = "identity", 
-                          na.rm = FALSE, 
-                          show.legend = NA,
-                          inherit.aes = TRUE, ...) {
+stat_post <- function(mapping = NULL, 
+                      data = NULL,
+                      geom = GeomSegment,
+                      position = "identity", 
+                      na.rm = FALSE, 
+                      show.legend = NA,
+                      inherit.aes = TRUE, ...) {
 
   ggplot2::layer(
     stat = StatPost, 
-    geom = ggplot2::GeomSegment, 
+    geom = geom, 
     data = data, 
     mapping = mapping,
     position = position, 
@@ -487,6 +502,10 @@ geom_post <- function(mapping = NULL,
   )
 
 }
+
+
+# aliasing
+geom_post <- stat_post
 ```
 
 ##### use/test/enjoy
@@ -499,21 +518,25 @@ ggplot(data = probs_df) +
 ```
 
 
-<!-- ### geom_lollipop: Tangential bonus topic: Combining layers into single geom_*() function -->
+### geom_lollipop: Tangential bonus topic: Combining layers into via `list()`
+
+One way to combine layers is via the `list()` function.  However, if you want your point and post to be more closely tied together, another mechanism exists... link to...
 
 
-<!-- ```{r} -->
-<!-- geom_lollipop <- function(...){ -->
+```{r}
+geom_lollipop <- function(...){
 
-<!--   list(geom_post(...), -->
-<!--        geom_point(...)) -->
+  list(geom_post(...),
+       geom_point(...))
 
-<!-- } -->
+}
 
-<!-- ggplot(probs_df) +  -->
-<!--   aes(x = outcome, y = prob) + -->
-<!--   geom_lollipop(color = "magenta") -->
-<!-- ``` -->
+ggplot(probs_df) +
+  aes(x = outcome, y = prob) +
+  geom_lollipop(color = "magenta")
+```
+
+
 
 ## geom_xy_means: **n:1:1, compute_group, GeomPoint** 
 
@@ -547,7 +570,7 @@ compute_group_means <- function(data, scales){
 ```
 
 
-Testing...
+#### Testing...
 
 ```{r}
 mtcars |> 
@@ -568,7 +591,7 @@ StatXymean <- ggplot2::ggproto("StatXymean",
 )
 ```
 
-Testing with layer() or geom_*()
+#### Testing with layer() or geom_*()
 
 ```{r}
 ggplot(mtcars) + 
@@ -576,15 +599,14 @@ ggplot(mtcars) +
   geom_point() + 
   geom_point(stat = StatXymean,
              size = 8)
-
-
 ```
 
 ### Step 3. Write user-facing function 
 
 ```{r}
-geom_xy_means <- function(mapping = NULL, 
+stat_xy_means <- function(mapping = NULL, 
                           data = NULL,
+                          geom = ggplot2::GeomPoint,
                           position = "identity", 
                           na.rm = FALSE, 
                           show.legend = NA,
@@ -592,7 +614,7 @@ geom_xy_means <- function(mapping = NULL,
 
   ggplot2::layer(
     stat = StatXymean, 
-    geom = ggplot2::GeomPoint, 
+    geom = geom, 
     data = data, 
     mapping = mapping,
     position = position, 
@@ -602,6 +624,9 @@ geom_xy_means <- function(mapping = NULL,
   )
 
 }
+
+# aliasing
+geom_xy_means <- stat_xy_means
 ```
 
 #### Use/Test/Enjoy
@@ -660,13 +685,15 @@ compute_group_c_hull <- function(data, scales){
 
 Below, we see that the dataset is reduced to 11 rows which constitute the convex hull perimeter.  
 
+#### Test
+
 ```{r}
 mtcars |> # 32 rows
   rename(x = wt, y = mpg) |> 
   compute_group_c_hull() # 11 rows
 ```
 
-### Step 2. Pass to ggproto
+### Step 2. Define Stat
 
 
 ```{r}
@@ -677,6 +704,7 @@ StatChull <- ggproto(`_class` = "StatChull",
                      required_aes = c("x", "y"))
 ```
 
+#### Test
 
 ```{r}
 ggplot(mtcars) + 
@@ -690,8 +718,9 @@ ggplot(mtcars) +
 ### Step 3. Write user-facing geom_/stat_ Function(s)
 
 ```{r}
-geom_chull <- function(mapping = NULL, 
-                        data = NULL,
+stat_chull <- function(mapping = NULL, 
+                      data = NULL,
+                       geom = GeomPolygon,
                         position = "identity", 
                         na.rm = FALSE, 
                         show.legend = NA,
@@ -699,7 +728,7 @@ geom_chull <- function(mapping = NULL,
 
   ggplot2::layer(
     stat = StatChull, 
-    geom = ggplot2::GeomPolygon, 
+    geom = geom, 
     data = data, mapping = mapping,
     position = position, 
     show.legend = show.legend, 
@@ -708,6 +737,9 @@ geom_chull <- function(mapping = NULL,
   )
 
 }
+
+# aliasing
+geom_chull <- stat_chull
 ```
 
 #### Try out/test/ enjoy
@@ -808,7 +840,7 @@ StatWaterfall <- ggplot2::ggproto(`_class` = "StatWaterfall",
 ```
 
 
-Test Stat with layer() or geom_*()
+#### Test Stat with layer() or geom_*()
 
 ```{r}
 flow_df %>% 
@@ -822,16 +854,17 @@ flow_df %>%
 In step 3, we define stat_waterfall, passing along StatWaterfall to create a ggplot2 layer function. We include a standard set of arguments, and we set the geom to ggplot2::GeomRect.  
 
 ```{r, code = readlines_wo_roxygen("../ggwaterfall/R/geom_waterfall.R")}
-geom_waterfall <- function(
+stat_waterfall <- function(
   mapping = NULL,
   data = NULL,
+  geom = GeomRect,
   position = "identity",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE, ...) {
   ggplot2::layer(
     stat = StatWaterfall,  # proto object from step 2
-    geom = ggplot2::GeomRect, 
+    geom = geom, 
     data = data,
     mapping = mapping,
     position = position,
@@ -840,6 +873,9 @@ geom_waterfall <- function(
     params = list(na.rm = na.rm, ...)
   )
 }
+
+# aliasing
+geom_waterfall <- stat_waterfall
 ```
 
 #### Use/test/enjoy
@@ -943,6 +979,8 @@ compute_panel_circlepack <- function(data, scales){
 }
 ```
 
+#### Test compute
+
 ```{r}
 gapminder::gapminder %>%  
   filter(continent == "Americas") %>%  
@@ -954,7 +992,7 @@ gapminder::gapminder %>%
 ```
 
 
-### Step 2. pass to ggproto object
+### Step 2. Define Stat object
 
 ```{r}
 StatCirclepack <- ggplot2::ggproto(`_class` = "StatCirclepack",
@@ -962,10 +1000,9 @@ StatCirclepack <- ggplot2::ggproto(`_class` = "StatCirclepack",
                                   required_aes = c("area"),
                                   compute_panel = compute_panel_circlepack
                                   )
-
 ```
 
-
+#### Test
 
 ```{r}
 gapminder::gapminder %>%  
@@ -975,7 +1012,7 @@ gapminder::gapminder %>%
   ggplot() + 
   aes(area = pop) + 
   geom_polygon(stat = StatCirclepack) + 
-  labs(title = "Population sizes are highly variable")
+  labs(title = "Population sizes are highly variable in the Americas in 2002")
 
 ```
 
@@ -983,13 +1020,14 @@ gapminder::gapminder %>%
 ### Step 3. pass to user-facing function
 
 ```{r}
-geom_circlepack <- function(mapping = NULL, data = NULL,
+stat_circlepack <- function(mapping = NULL, data = NULL,
+                            geom = GeomPolygon,
                            position = "identity", na.rm = FALSE,
                            show.legend = NA,
                            inherit.aes = TRUE, ...) {
   ggplot2::layer(
     stat = StatCirclepack, # proto object from Step 2
-    geom = ggplot2::GeomPolygon, # inherit other behavior
+    geom = geom, # inherit other behavior
     data = data,
     mapping = mapping,
     position = position,
@@ -998,6 +1036,9 @@ geom_circlepack <- function(mapping = NULL, data = NULL,
     params = list(na.rm = na.rm, ...)
   )
 }
+
+# aliasing
+geom_circlepack <- stat_circlepack
 ```
 
 #### Use/test/enjoy
@@ -1021,7 +1062,9 @@ last_plot() +
 
 ## geom_circle: **1:1:n, compute_panel, GeomPolygon**
 
-This next example is the case that TLP took on in his talk, but takes a bit different approach to be more consistent with other approaches in this cookbook.  Essentially, for each row in our data set with defined centers x0 and y0 and radius r, we are joining up 15 rows which then help us build a circle around the x0y0 circle center. 
+This next example is the case that Thomas Lin Pederson took on in his talk, but takes a bit different approach to be more consistent with other approaches in this cookbook.  Essentially, for each row in our data set with defined centers x0 and y0 and radius r, we are joining up 15 rows which then help us build a circle around the x0y0 circle center. 
+
+I use the internal variable name 'around' instead of 'angle' since angle meaningful to gglot2 for defining the angle of text, which is not our meaning here. 
 
 *a single row in a dataframe: will be visualized by a single mark : the mark will be defined by many-row in an internal dataframe*
 
@@ -1040,9 +1083,9 @@ n_vertices <- 15
 data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) |> 
   mutate(input_data_row_id = row_number()) |> 
   crossing(tibble(vertex_id = 0:n_vertices)) |> 
-  mutate(angle = 2*pi*vertex_id/max(vertex_id)) |> 
-  mutate(x = x0 + cos(angle)*r,
-         y = y0 + sin(angle)*r) |> 
+  mutate(around = 2*pi*vertex_id/max(vertex_id)) |> 
+  mutate(x = x0 + cos(around)*r,
+         y = y0 + sin(around)*r) |> 
   ggplot() + 
   aes(x, y) +
   geom_path(aes(group = input_data_row_id)) +
@@ -1068,7 +1111,7 @@ tibble(x = 1:2, y = 1:2, r = 1 ) |>
   compute_panel_circle()
 ```
 
-### Step 2. Pass to ggproto
+### Step 2. Define Stat
 
 
 ```{r}
@@ -1080,7 +1123,7 @@ StatCircle <- ggproto(
                       )
 ```
 
-Test with geom_*() or layer
+#### Test with geom_*() or layer
 
 
 ```{r}
@@ -1096,16 +1139,17 @@ mpg %>%
 
 
 ```{r}
-geom_circle <- function(
+stat_circle <- function(
   mapping = NULL,
   data = NULL,
+  geom = GeomPolygon,
   position = "identity",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE, ...) {
   ggplot2::layer(
     stat = StatCircle,  # proto object from Step 2
-    geom = ggplot2::GeomPolygon,  # inherit other behavior
+    geom = geom,  # inherit other behavior
     data = data,
     mapping = mapping,
     position = position,
@@ -1114,9 +1158,11 @@ geom_circle <- function(
     params = list(na.rm = na.rm, ...)
   )
 }
+
+geom_circle <- stat_circle
 ```
 
-### Step 4: Enjoy (test)
+#### Test enjoy
 
 
 ```{r}
@@ -1153,53 +1199,52 @@ last_plot() +
   facet_wrap(~ dist > 40)
 ```
 
-### Discussion: Why not compute_group
+<!-- ### Discussion: Why not compute_group -->
 
-```{r}
-StatCircle2 <- ggproto(
-  `_class` = "StatCircle2",
-  `_inherit` = ggplot2::Stat,
-  compute_group = compute_panel_circle,
-  required_aes = c("x0", "y0", "r"))
+<!-- ```{r} -->
+<!-- StatCircle2 <- ggproto( -->
+<!--   `_class` = "StatCircle2", -->
+<!--   `_inherit` = ggplot2::Stat, -->
+<!--   compute_group = compute_panel_circle, -->
+<!--   required_aes = c("x0", "y0", "r")) -->
 
-geom_circle_CG <- function(
-  mapping = NULL,
-  data = NULL,
-  position = "identity",
-  na.rm = FALSE,
-  show.legend = NA,
-  inherit.aes = TRUE, ...) {
-  ggplot2::layer(
-    stat = StatCircle2,  # proto object from Step 2
-    geom = ggplot2::GeomPolygon,  # inherit other behavior
-    data = data,
-    mapping = mapping,
-    position = position,
-    show.legend = show.legend,
-    inherit.aes = inherit.aes,
-    params = list(na.rm = na.rm, ...)
-  )
-}
+<!-- geom_circle_CG <- function( -->
+<!--   mapping = NULL, -->
+<!--   data = NULL, -->
+<!--   position = "identity", -->
+<!--   na.rm = FALSE, -->
+<!--   show.legend = NA, -->
+<!--   inherit.aes = TRUE, ...) { -->
+<!--   ggplot2::layer( -->
+<!--     stat = StatCircle2,  # proto object from Step 2 -->
+<!--     geom = ggplot2::GeomPolygon,  # inherit other behavior -->
+<!--     data = data, -->
+<!--     mapping = mapping, -->
+<!--     position = position, -->
+<!--     show.legend = show.legend, -->
+<!--     inherit.aes = inherit.aes, -->
+<!--     params = list(na.rm = na.rm, ...) -->
+<!--   ) -->
+<!-- } -->
 
-cars |> 
-  sample_n(12) |>  
-  ggplot() + 
-  aes(x0 = speed, y0 = dist, r = dist/speed) + 
-  geom_circle_CG(color = "black") +
-  coord_equal() + 
-  aes(alpha = speed > 15) +
-  aes(linetype = dist > 20) +
-  aes(fill = speed > 18) +
-  facet_wrap(~ dist > 40)
+<!-- cars |>  -->
+<!--   sample_n(12) |>   -->
+<!--   ggplot() +  -->
+<!--   aes(x0 = speed, y0 = dist, r = dist/speed) +  -->
+<!--   geom_circle_CG(color = "black") + -->
+<!--   coord_equal() +  -->
+<!--   aes(alpha = speed > 15) + -->
+<!--   aes(linetype = dist > 20) + -->
+<!--   aes(fill = speed > 18) + -->
+<!--   facet_wrap(~ dist > 40) -->
 
 
-```
+<!-- ``` -->
 
 
 ### Exercise: Write the function, geom_heart() that will take the compute below and do it within the geom_* function
 
 ```{r}
-
 data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>% 
   mutate(group = row_number()) %>% 
   tidyr::crossing(vertex_index = 0:15/15) %>%
@@ -1220,7 +1265,6 @@ data.frame(x0 = 0:1, y0 = 0:1, r = 1:2/3) %>%
 
 ## geom_state: **1:1:n, compute_panel, GeomPolygon**
 
-
 ### Step 0:  use base ggplot2
 
 ```{r}
@@ -1235,7 +1279,8 @@ us_states_geo <- ggplot2::map_data("state")
 head(us_states_geo)
 
 states_characteristics |> 
-  left_join(us_states_geo |> mutate(state.name = stringr::str_to_title(region))) |> 
+  left_join(us_states_geo |> 
+              mutate(state.name = stringr::str_to_title(region))) |> 
   ggplot() + 
   aes(x = long, y = lat, group = group) +
   geom_polygon() +
@@ -1271,7 +1316,7 @@ compute_panel_state <- function(data, scales){
 ```
 
 
-And let's test out this compute...
+#### Test
 
 ```{r}
 states_characteristics |> 
@@ -1279,7 +1324,7 @@ states_characteristics |>
   compute_panel_state()
 ```
 
-### Step 2. Pass to ggproto
+### Step 2. Pass to Stat
 
 ```{r}
 StatUsstate <- ggplot2::ggproto(`_class` = "StatUsstate",
@@ -1385,7 +1430,7 @@ compute_panel_lm_parallel <- function(data, scales){
 ```
 
 
-### Step 2. Pass compute to ggproto object
+### Step 2. Define Stat
 
 ```{r}
 StatParallel <- ggplot2::ggproto(`_class` = "StatParallel",
@@ -1395,7 +1440,7 @@ StatParallel <- ggplot2::ggproto(`_class` = "StatParallel",
                            default_aes = aes(color = after_stat(category)))
 ```
 
-Use layer() or geom_*() function to test stat
+#### Use layer() or geom_*() function to test stat
 
 ```{r}
 penguins_df |>
@@ -1411,13 +1456,15 @@ penguins_df |>
 ### Step 3. Pass to user-facing function
 
 ```{r}
-geom_ols_linear_parallel <- function(mapping = NULL, data = NULL,
+stat_ols_linear_parallel <- function(mapping = NULL, data = NULL,
+                                     geom = GeomLine,
                            position = "identity", na.rm = FALSE,
+                           
                            show.legend = NA,
                            inherit.aes = TRUE, ...) {
   ggplot2::layer(
     stat = StatParallel, # proto object from Step 2
-    geom = ggplot2::GeomLine, # inherit other behavior
+    geom = geom, # inherit other behavior
     data = data,
     mapping = mapping,
     position = position,
@@ -1426,6 +1473,9 @@ geom_ols_linear_parallel <- function(mapping = NULL, data = NULL,
     params = list(na.rm = na.rm, ...)
   )
 }
+
+# alias
+geom_ols_linear_parallel <- stat_ols_linear_parallel
 ```
 
 #### Use/test/enjoy
@@ -1502,7 +1552,7 @@ northcarolina_county_reference <-
   tibble()
 ```
 
-#### Compute Step using reference data
+#### Define Compute using reference data
 
 ```{r}
 compute_panel_county <- function(data, scales){
@@ -1515,7 +1565,7 @@ compute_panel_county <- function(data, scales){
 
 
 
-### Step 2. pass to ggproto object
+### Step 2. Define Stat
 
 ```{r}
 StatNcfips <- ggplot2::ggproto(`_class` = "StatNcfips",
@@ -1691,53 +1741,7 @@ Use sf data to create another set of useful layers for making choropleths
 
 ## stat_chull: **N:1:n; compute_group; GeomPolygon, GeomText, GeomPoint**
 
-Rather than defining geom functions, you might instead write stat_* functions which can be used with a variety of geoms.  Let's contrast geom_chull and stat_chull below.
-
-```{r}
-geom_chull <- function(mapping = NULL, 
-                        data = NULL,
-                        position = "identity", 
-                        na.rm = FALSE, 
-                        show.legend = NA,
-                        inherit.aes = TRUE, ...) {
-
-  ggplot2::layer(
-    stat = StatChull, 
-    geom = ggplot2::GeomPolygon, 
-    data = data, mapping = mapping,
-    position = position, 
-    show.legend = show.legend, 
-    inherit.aes = inherit.aes,
-    params = list(na.rm = na.rm, ...)
-  )
-
-}
-
-
-stat_chull <- function(mapping = NULL, 
-                       geom = ggplot2::GeomPolygon, 
-                       data = NULL,
-                       position = "identity", 
-                       na.rm = FALSE, 
-                       show.legend = NA,
-                       inherit.aes = TRUE, ...) {
-
-  ggplot2::layer(
-    stat = StatChull, 
-    geom = geom, 
-    data = data, 
-    mapping = mapping,
-    position = position, 
-    show.legend = show.legend, 
-    inherit.aes = inherit.aes,
-    params = list(na.rm = na.rm, ...)
-  )
-
-}
-```
-
-The construction is almost identical.  However, in the stat version, the geom is flexible because it can be user defined, instead of being hard-coded in the function.  Its use allows you to go in different visual directions, but might have a higher cognitive load.
-
+Rather than using your layer in a predetermined way geom, recall that you are in fact writing stat_* functions, which could be used with a variety of geoms.  Let's look at stat_chull's flexible usage below. 
 
 ```{r}
 p <- ggplot(data = mtcars) + 
@@ -1764,18 +1768,28 @@ p +
              hjust = 0)
 ```
 
-## stat_waterfall: **1:1:1; compute_panel; GeomRect, GeomText**
+For ease of use, you may consider offering convenience functions for variants of your default `stat_*()` function. 
 
-Now, we also return to the waterfall question. Let's see how we can prepare the same stat to serve both with GeomRect and GeomText to write user-facing functions. In brief, we'll create a stat_* user-facing function which doesn't hard-code our geom, but has the default GeomRect.  We'll alias stat_waterfall to geom_* waterfall, and also create geom_waterfall_text for labeling the rectangle-based layer. 
+```{r}
+geom_chull_point <- function(){stat_chull(geom = GeomPoint)}
+geom_chull_text <- function(){stat_chull(geom = GeomText)}
+```
+
+
+## stat packing.  stat_waterfall: **1:1:1; compute_panel; GeomRect, GeomText**
+
+Now, we also return to the waterfall. Let's see how we can prepare the same stat to serve both with GeomRect and GeomText to write user-facing functions. In brief, we'll create a stat_* user-facing function which doesn't hard-code our geom, but has the default GeomRect.  We'll alias stat_waterfall to geom_* waterfall, and also create geom_waterfall_text for labeling the rectangle-based layer. 
 
 ```{r}
 StatWaterfall <- ggplot2::ggproto(`_class` = "StatWaterfall", 
                          `_inherit` = ggplot2::Stat,
                          required_aes = c("change", "x"),
                          compute_panel = compute_panel_waterfall,
-                         default_aes = ggplot2::aes(label = ggplot2::after_stat(change),
-                                           fill = ggplot2::after_stat(gain_loss),
-                                           vjust = ggplot2::after_stat((direction == -1) %>%
+                         default_aes = 
+                           ggplot2::aes(label = ggplot2::after_stat(change),
+                                        fill = ggplot2::after_stat(gain_loss),
+                                        vjust = ggplot2::after_stat((
+                                          direction == -1) %>%
                                                                 as.numeric)))
 
 stat_waterfall <- function(geom = ggplot2::GeomRect, 
@@ -1799,9 +1813,8 @@ stat_waterfall <- function(geom = ggplot2::GeomRect,
 
 geom_waterfall <- stat_waterfall
 
-geom_waterfall_label <- function(..., lineheight = .8){
-  stat_waterfall(geom = "text", 
-                 lineheight = lineheight, ...)}
+geom_waterfall_label <- function(...){
+  stat_waterfall(geom = "text", ...)}
 
 flow_df |> 
   ggplot() +
